@@ -26,17 +26,20 @@ export const SERVICE_HIGHLIGHTS = [
   {
     number: '01',
     title: 'Montagem de m\u00f3veis',
-    description: 'Guarda-roupas, cama, estante, cozinha planejada.',
+    description:
+      'Guarda-roupas, cama, estante, cozinha planejada. Toda a linha de m\u00f3veis do convencional ao corporativo.',
   },
   {
     number: '02',
     title: 'Reparos el\u00e9tricos',
-    description: 'Tomadas, interruptores, lumin\u00e1rias.',
+    description:
+      'Tomadas, interruptores, lumin\u00e1rias. El\u00e9trica e reparo em geral.',
   },
   {
     number: '03',
     title: 'Reparos hidr\u00e1ulicos',
-    description: 'Vazamentos, registros, torneiras, chuveiros.',
+    description:
+      'Vazamentos, registros, torneiras, chuveiros. Hidr\u00e1ulica em geral.',
   },
   {
     number: '04',
