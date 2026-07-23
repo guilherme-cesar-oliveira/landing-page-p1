@@ -1,5 +1,5 @@
-export const WHATSAPP_NUMBER = '5500000000000'
-export const WHATSAPP_DISPLAY_NUMBER = '(00) 00000-0000'
+export const WHATSAPP_NUMBER = '5547984419705'
+export const WHATSAPP_DISPLAY_NUMBER = '(47) 98441-9705'
 
 export const HERO_EYEBROW =
   'Marido de aluguel \u00b7 montagem de m\u00f3veis'
@@ -46,7 +46,8 @@ export const SERVICE_HIGHLIGHTS = [
   {
     number: '05',
     title: 'Manuten\u00e7\u00e3o geral',
-    description: 'Portas, dobradi\u00e7as, fechaduras, rejuntes.',
+    description:
+      'Troca de pisos, limpeza de caixa d\u2019\u00e1gua, toda a parte de manuten\u00e7\u00e3o residencial.',
   },
   {
     number: '06',
