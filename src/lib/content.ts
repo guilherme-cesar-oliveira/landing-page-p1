@@ -50,7 +50,7 @@ export const SERVICE_HIGHLIGHTS = [
     number: '05',
     title: 'Manuten\u00e7\u00e3o geral',
     description:
-      'Troca de pisos, limpeza de caixa d\u2019\u00e1gua, toda a parte de manuten\u00e7\u00e3o residencial.',
+      'Portas, dobradi\u00e7as, fechaduras, rejuntes, limpeza de caixa d\u2019\u00e1gua, toda a parte de manuten\u00e7\u00e3o residencial.',
   },
   {
     number: '06',
