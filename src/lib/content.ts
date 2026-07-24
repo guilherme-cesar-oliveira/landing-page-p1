@@ -2,7 +2,7 @@ export const WHATSAPP_NUMBER = '5547984419705'
 export const WHATSAPP_DISPLAY_NUMBER = '(47) 98441-9705'
 
 export const HERO_EYEBROW =
-  'Marido de aluguel \u00b7 montagem de m\u00f3veis'
+  'Solu\u00e7\u00f5es em manuten\u00e7\u00e3o \u00b7 residencial e comercial'
 export const DEFAULT_WHATSAPP_MESSAGE =
   'Ol\u00e1! Vim pela landing e gostaria de um or\u00e7amento.'
 
