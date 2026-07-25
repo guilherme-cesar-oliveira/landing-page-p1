@@ -5,6 +5,15 @@ export const SITE_DATABASE_STORAGE_KEY = 'landing-page.site-database.v1'
 export const ADMIN_SESSION_STORAGE_KEY = 'landing-page.admin-session.v1'
 export const ADMIN_PUBLISH_SETTINGS_STORAGE_KEY =
   'landing-page.admin-publish-settings.v1'
+export const ADMIN_GITHUB_TOKEN_STORAGE_KEY =
+  'landing-page.admin-github-token.v1'
+
+export const GITHUB_PUBLISH_TARGET = {
+  owner: 'guilherme-cesar-oliveira',
+  repo: 'landing-page-p1',
+  branch: 'main',
+  path: 'public/site-admin-db.json',
+} as const
 
 export const ADMIN_CREDENTIALS = {
   username: 'admin',
@@ -378,6 +387,37 @@ export function cloneSiteConfig(config: SiteConfig): SiteConfig {
 
 export function cloneSiteDatabase(database: SiteDatabase): SiteDatabase {
   return structuredClone(database)
+}
+
+export function syncDatabaseWithCurrentConfig(
+  database: SiteDatabase,
+  config: SiteConfig,
+) {
+  const nextDatabase = cloneSiteDatabase(database)
+  const nextConfig = cloneSiteConfig(config)
+
+  nextDatabase.updatedAt = new Date().toISOString()
+  nextDatabase.currentPresetId = 'default'
+  nextDatabase.currentConfig = nextConfig
+
+  const defaultPresetIndex = nextDatabase.presets.findIndex(
+    (preset) => preset.id === 'default',
+  )
+
+  if (defaultPresetIndex >= 0) {
+    nextDatabase.presets[defaultPresetIndex] = {
+      ...nextDatabase.presets[defaultPresetIndex],
+      config: cloneSiteConfig(nextConfig),
+    }
+  } else {
+    nextDatabase.presets.unshift({
+      id: 'default',
+      name: 'Padrão Junior',
+      config: cloneSiteConfig(nextConfig),
+    })
+  }
+
+  return nextDatabase
 }
 
 export function slugifyPresetName(value: string) {

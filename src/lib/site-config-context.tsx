@@ -17,6 +17,7 @@ import {
   createFallbackSiteDatabase,
   resolvePublicAssetUrl,
   slugifyPresetName,
+  syncDatabaseWithCurrentConfig,
   type SiteConfig,
   type SiteDatabase,
   type SitePreset,
@@ -305,10 +306,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
       isReady,
       isAdminAuthenticated,
       saveCurrentConfig(config) {
-        updateDatabase({
-          ...cloneSiteDatabase(database),
-          currentConfig: cloneSiteConfig(config),
-        })
+        updateDatabase(syncDatabaseWithCurrentConfig(database, config))
       },
       applyPreset(presetId) {
         const preset = database.presets.find((item) => item.id === presetId)

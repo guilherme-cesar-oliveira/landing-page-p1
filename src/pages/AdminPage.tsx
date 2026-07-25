@@ -7,6 +7,8 @@ import {
   useState,
 } from 'react'
 import {
+  Check,
+  ChevronDown,
   Download,
   FileJson,
   Globe,
@@ -16,41 +18,23 @@ import {
   Palette,
   Save,
   Settings2,
-  ShieldAlert,
+  Trash2,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  ADMIN_PUBLISH_SETTINGS_STORAGE_KEY,
+  ADMIN_GITHUB_TOKEN_STORAGE_KEY,
+  GITHUB_PUBLISH_TARGET,
   SITE_HASH_ROUTE,
   cloneSiteConfig,
-  cloneSiteDatabase,
+  resolvePublicAssetUrl,
+  syncDatabaseWithCurrentConfig,
+  type SiteDatabase,
 } from '@/lib/site-config'
 import { useSiteConfig } from '@/lib/use-site-config'
-
-type PublishSettings = {
-  owner: string
-  repo: string
-  branch: string
-  path: string
-}
-
-const DEFAULT_PUBLISH_SETTINGS: PublishSettings = {
-  owner: 'guilherme-cesar-oliveira',
-  repo: 'landing-page-p1',
-  branch: 'main',
-  path: 'public/site-admin-db.json',
-}
 
 function encodeBase64Unicode(value: string) {
   const bytes = new TextEncoder().encode(value)
@@ -61,6 +45,35 @@ function encodeBase64Unicode(value: string) {
   })
 
   return btoa(binary)
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+function getStoredGithubToken() {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  return window.localStorage.getItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY) ?? ''
+}
+
+function getSiteHomeHref() {
+  if (typeof window === 'undefined') {
+    return SITE_HASH_ROUTE
+  }
+
+  const pathname =
+    window.location.pathname.replace(/\/admin\/?$/, '/') || '/'
+  const normalizedPathname = pathname.endsWith('/') ? pathname : `${pathname}/`
+
+  return `${window.location.origin}${normalizedPathname}#/`
 }
 
 function AdminSection({
@@ -135,15 +148,125 @@ function ColorField({
   )
 }
 
+function AccordionBlock({
+  title,
+  description,
+  children,
+  defaultOpen = false,
+}: {
+  title: string
+  description: string
+  children: ReactNode
+  defaultOpen?: boolean
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
+  return (
+    <section className="admin-accordion">
+      <button
+        type="button"
+        className="flex w-full items-start justify-between gap-4 text-left"
+        onClick={() => setIsOpen((current) => !current)}
+        aria-expanded={isOpen}
+      >
+        <div className="space-y-2">
+          <h3 className="admin-subtitle text-left">{title}</h3>
+          <p className="admin-field-hint">{description}</p>
+        </div>
+        <ChevronDown
+          className={`mt-1 size-5 shrink-0 text-brand transition-transform duration-300 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {isOpen ? <div className="mt-5 space-y-6">{children}</div> : null}
+    </section>
+  )
+}
+
+function ImageField({
+  label,
+  value,
+  onChange,
+  onUploadClick,
+  hint,
+  alt,
+  variant,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  onUploadClick: () => void
+  hint?: string
+  alt: string
+  variant: 'icon' | 'wide'
+}) {
+  const previewUrl = resolvePublicAssetUrl(value)
+
+  return (
+    <div className="space-y-3">
+      <Label className="text-foreground">{label}</Label>
+      <div className="admin-preview-frame">
+        <div
+          className={
+            variant === 'icon'
+              ? 'grid size-20 shrink-0 place-items-center overflow-hidden rounded-[8px] border border-brand/16 bg-black/40'
+              : 'min-w-0 overflow-hidden rounded-[8px] border border-brand/16 bg-black/40'
+          }
+        >
+          {previewUrl ? (
+            variant === 'icon' ? (
+              <img
+                src={previewUrl}
+                alt={alt}
+                className="size-full object-cover"
+              />
+            ) : (
+              <div className="aspect-[1.91/1] w-full">
+                <img
+                  src={previewUrl}
+                  alt={alt}
+                  className="size-full object-cover"
+                />
+              </div>
+            )
+          ) : (
+            <div
+              className={
+                variant === 'icon'
+                  ? 'px-3 text-center text-xs font-semibold uppercase tracking-[0.22em] text-foreground-muted'
+                  : 'grid aspect-[1.91/1] place-items-center px-4 text-center text-xs font-semibold uppercase tracking-[0.22em] text-foreground-muted'
+              }
+            >
+              Sem imagem
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-3">
+          <Input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="./imagem.png, https://... ou data URL"
+          />
+          <Button type="button" variant="outline" onClick={onUploadClick}>
+            <ImagePlus className="size-5" />
+            Substituir imagem
+          </Button>
+        </div>
+      </div>
+      {hint ? <p className="admin-field-hint">{hint}</p> : null}
+    </div>
+  )
+}
+
 function AdminPage() {
   const {
     database,
     currentConfig,
     isAdminAuthenticated,
     saveCurrentConfig,
-    applyPreset,
-    createPreset,
-    deletePreset,
     importDatabase,
     resetDatabase,
     signIn,
@@ -152,52 +275,24 @@ function AdminPage() {
   } = useSiteConfig()
   const [draftConfig, setDraftConfig] = useState(() => cloneSiteConfig(currentConfig))
   const [isDirty, setIsDirty] = useState(false)
-  const [selectedPresetId, setSelectedPresetId] = useState(database.currentPresetId)
-  const [presetName, setPresetName] = useState('')
   const [feedback, setFeedback] = useState('')
   const [loginError, setLoginError] = useState('')
-  const [publishFeedback, setPublishFeedback] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
-  const [githubToken, setGithubToken] = useState('')
-  const [publishSettings, setPublishSettings] = useState<PublishSettings>(() => {
-    if (typeof window === 'undefined') {
-      return DEFAULT_PUBLISH_SETTINGS
-    }
-
-    try {
-      const raw = window.localStorage.getItem(ADMIN_PUBLISH_SETTINGS_STORAGE_KEY)
-
-      if (!raw) {
-        return DEFAULT_PUBLISH_SETTINGS
-      }
-
-      return {
-        ...DEFAULT_PUBLISH_SETTINGS,
-        ...(JSON.parse(raw) as Partial<PublishSettings>),
-      }
-    } catch {
-      return DEFAULT_PUBLISH_SETTINGS
-    }
-  })
+  const [githubToken, setGithubToken] = useState(() => getStoredGithubToken())
+  const [tokenInputValue, setTokenInputValue] = useState('')
+  const [isEditingToken, setIsEditingToken] = useState(() => !getStoredGithubToken())
   const [loginValues, setLoginValues] = useState({
     username: '',
     password: '',
   })
   const importInputRef = useRef<HTMLInputElement | null>(null)
   const faviconInputRef = useRef<HTMLInputElement | null>(null)
+  const ogImageInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     setDraftConfig(cloneSiteConfig(currentConfig))
-    setSelectedPresetId(database.currentPresetId)
     setIsDirty(false)
-  }, [currentConfig, database.currentPresetId])
-
-  useEffect(() => {
-    window.localStorage.setItem(
-      ADMIN_PUBLISH_SETTINGS_STORAGE_KEY,
-      JSON.stringify(publishSettings),
-    )
-  }, [publishSettings])
+  }, [currentConfig])
 
   function updateDraft(mutator: (nextConfig: typeof draftConfig) => void) {
     setDraftConfig((current) => {
@@ -209,25 +304,55 @@ function AdminPage() {
     setFeedback('')
   }
 
-  function handleSave() {
-    saveCurrentConfig(draftConfig)
-    setIsDirty(false)
+  function buildDatabaseSnapshot() {
+    return syncDatabaseWithCurrentConfig(database, draftConfig)
+  }
+
+  function persistGithubToken(token: string) {
+    window.localStorage.setItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY, token)
+    setGithubToken(token)
+  }
+
+  function clearGithubToken() {
+    window.localStorage.removeItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY)
+    setGithubToken('')
+  }
+
+  function handleSaveToken() {
+    const nextToken = tokenInputValue.trim()
+
+    if (!nextToken) {
+      setFeedback(
+        'Informe um token do GitHub para habilitar o salvar e publicar.',
+      )
+      return
+    }
+
+    persistGithubToken(nextToken)
+    setTokenInputValue('')
+    setIsEditingToken(false)
     setFeedback(
-      'Alterações salvas neste navegador e aplicadas ao site. Para compartilhar com todos, publique o JSON no GitHub.',
+      'Token salvo neste navegador. O botão Salvar e publicar já atualiza o JSON compartilhado do site.',
+    )
+  }
+
+  function handleRemoveToken() {
+    clearGithubToken()
+    setTokenInputValue('')
+    setIsEditingToken(true)
+    setFeedback(
+      'Token removido deste navegador. Configure outro token para voltar a publicar automaticamente.',
     )
   }
 
   function handleDiscard() {
     setDraftConfig(cloneSiteConfig(currentConfig))
     setIsDirty(false)
-    setFeedback('Rascunho descartado. O site voltou ao estado salvo.')
+    setFeedback('Rascunho descartado. O painel voltou ao último estado salvo localmente.')
   }
 
   function handleExport() {
-    const nextDatabase = cloneSiteDatabase(database)
-    nextDatabase.currentConfig = cloneSiteConfig(draftConfig)
-    nextDatabase.updatedAt = new Date().toISOString()
-    const fileContents = JSON.stringify(nextDatabase, null, 2)
+    const fileContents = JSON.stringify(buildDatabaseSnapshot(), null, 2)
     const blob = new Blob([fileContents], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
@@ -247,172 +372,127 @@ function AdminPage() {
 
     const raw = await file.text()
     const result = importDatabase(raw)
+
     setFeedback(
       result.ok
-        ? 'JSON importado com sucesso. As novas configurações já estão ativas.'
-        : result.error ?? 'Não foi possível importar o JSON.',
+        ? 'JSON importado com sucesso. A nova versão já está ativa localmente e pode ser publicada pelo botão Salvar e publicar.'
+        : result.error ?? 'Não foi possível importar o JSON informado.',
     )
     event.target.value = ''
   }
 
-  async function handleFaviconUpload(event: ChangeEvent<HTMLInputElement>) {
+  function handleResetDatabase() {
+    resetDatabase()
+    setFeedback('Base local restaurada para o conteúdo padrão do projeto.')
+  }
+
+  async function handleImageUpload(
+    event: ChangeEvent<HTMLInputElement>,
+    applyValue: (value: string) => void,
+  ) {
     const file = event.target.files?.[0]
 
     if (!file) {
       return
     }
 
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.onerror = () => reject(reader.error)
-      reader.readAsDataURL(file)
-    })
-
-    updateDraft((next) => {
-      next.branding.faviconUrl = dataUrl
-    })
+    const dataUrl = await readFileAsDataUrl(file)
+    applyValue(dataUrl)
     event.target.value = ''
   }
 
-  function handleApplyPreset() {
-    applyPreset(selectedPresetId)
-    setFeedback('Preset aplicado. Revise e salve se quiser continuar editando.')
-  }
-
-  function handleCreatePreset() {
-    const trimmedName = presetName.trim()
-
-    if (!trimmedName) {
-      setFeedback('Dê um nome ao preset antes de salvar.')
-      return
-    }
-
-    createPreset(trimmedName, draftConfig)
-    setPresetName('')
-    setIsDirty(false)
-    setFeedback('Preset salvo com sucesso nesta base local.')
-  }
-
-  function handleDeletePreset() {
-    if (selectedPresetId === 'default') {
-      setFeedback('O preset padrão não pode ser removido.')
-      return
-    }
-
-    deletePreset(selectedPresetId)
-    setFeedback('Preset removido.')
-  }
-
-  function handleResetDatabase() {
-    resetDatabase()
-    setFeedback('Banco local restaurado para o preset base do projeto.')
-  }
-
-  function buildPublishableDatabase() {
-    const nextDatabase = cloneSiteDatabase(database)
-    nextDatabase.updatedAt = new Date().toISOString()
-    nextDatabase.currentPresetId = selectedPresetId
-    nextDatabase.currentConfig = cloneSiteConfig(draftConfig)
-
-    const presetIndex = nextDatabase.presets.findIndex(
-      (preset) => preset.id === selectedPresetId,
+  async function handleFaviconUpload(event: ChangeEvent<HTMLInputElement>) {
+    await handleImageUpload(event, (value) =>
+      updateDraft((next) => {
+        next.branding.faviconUrl = value
+      }),
     )
-
-    if (presetIndex >= 0) {
-      nextDatabase.presets[presetIndex] = {
-        ...nextDatabase.presets[presetIndex],
-        config: cloneSiteConfig(draftConfig),
-      }
-    }
-
-    return nextDatabase
   }
 
-  async function handlePublishToGithub() {
-    if (
-      !publishSettings.owner.trim() ||
-      !publishSettings.repo.trim() ||
-      !publishSettings.branch.trim() ||
-      !publishSettings.path.trim()
-    ) {
-      setPublishFeedback(
-        'Preencha owner, repositório, branch e caminho do JSON antes de publicar.',
-      )
-      return
-    }
-    if (!githubToken.trim()) {
-      setPublishFeedback(
-        'Informe um token do GitHub com permissão de escrita no repositório antes de publicar.',
-      )
-      return
-    }
+  async function handleOgImageUpload(event: ChangeEvent<HTMLInputElement>) {
+    await handleImageUpload(event, (value) =>
+      updateDraft((next) => {
+        next.seo.ogImage = value
+      }),
+    )
+  }
 
-    const nextDatabase = buildPublishableDatabase()
-    const content = JSON.stringify(nextDatabase, null, 2)
-    const token = githubToken.trim()
-    const owner = publishSettings.owner.trim()
-    const repo = publishSettings.repo.trim()
-    const branch = publishSettings.branch.trim()
-    const path = publishSettings.path.trim()
+  async function publishDatabase(nextDatabase: SiteDatabase, token: string) {
+    const { owner, repo, branch, path } = GITHUB_PUBLISH_TARGET
     const baseUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`
-
-    setIsPublishing(true)
-    setPublishFeedback('')
-
-    try {
-      const getResponse = await fetch(
-        `${baseUrl}?ref=${encodeURIComponent(branch)}`,
-        {
-          headers: {
-            Accept: 'application/vnd.github+json',
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-
-      if (getResponse.status !== 404 && !getResponse.ok) {
-        throw new Error(
-          `Não foi possível ler o JSON remoto (${getResponse.status}).`,
-        )
-      }
-
-      const currentFile =
-        getResponse.status === 404
-          ? null
-          : ((await getResponse.json()) as { sha: string })
-
-      const putResponse = await fetch(baseUrl, {
-        method: 'PUT',
+    const getResponse = await fetch(
+      `${baseUrl}?ref=${encodeURIComponent(branch)}`,
+      {
         headers: {
           Accept: 'application/vnd.github+json',
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: `Update site admin database - ${new Date().toISOString()}`,
-          content: encodeBase64Unicode(content),
-          branch,
-          ...(currentFile?.sha ? { sha: currentFile.sha } : {}),
-        }),
-      })
+      },
+    )
 
-      if (!putResponse.ok) {
-        throw new Error(
-          `O GitHub recusou a atualização (${putResponse.status}).`,
-        )
-      }
+    if (getResponse.status !== 404 && !getResponse.ok) {
+      throw new Error(
+        `Não foi possível ler o JSON remoto (${getResponse.status}).`,
+      )
+    }
 
-      saveCurrentConfig(draftConfig)
-      setIsDirty(false)
-      setPublishFeedback(
-        'JSON publicado no GitHub com sucesso. O GitHub Pages deve refletir a nova versão após o próximo deploy automático.',
+    const currentFile =
+      getResponse.status === 404
+        ? null
+        : ((await getResponse.json()) as { sha: string })
+
+    const putResponse = await fetch(baseUrl, {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `Update site admin database - ${new Date().toISOString()}`,
+        content: encodeBase64Unicode(JSON.stringify(nextDatabase, null, 2)),
+        branch,
+        ...(currentFile?.sha ? { sha: currentFile.sha } : {}),
+      }),
+    })
+
+    if (!putResponse.ok) {
+      throw new Error(
+        `O GitHub recusou a atualização (${putResponse.status}).`,
+      )
+    }
+  }
+
+  async function handleSaveAndPublish() {
+    const token = githubToken.trim()
+
+    if (!token) {
+      setFeedback(
+        'Configure um token do GitHub neste navegador para usar o salvar e publicar.',
+      )
+      setIsEditingToken(true)
+      return
+    }
+
+    const nextDatabase = buildDatabaseSnapshot()
+
+    saveCurrentConfig(draftConfig)
+    setIsDirty(false)
+    setIsPublishing(true)
+    setFeedback('')
+
+    try {
+      await publishDatabase(nextDatabase, token)
+      setFeedback(
+        'Alterações salvas neste navegador e publicadas no GitHub. O GitHub Pages deve refletir a nova versão após o próximo deploy automático.',
       )
     } catch (error) {
-      setPublishFeedback(
-        error instanceof Error
-          ? error.message
-          : 'Falha ao publicar o JSON no GitHub.',
+      setFeedback(
+        `${
+          error instanceof Error
+            ? error.message
+            : 'Falha ao publicar o JSON no GitHub.'
+        } As alterações ficaram salvas localmente, mas a versão compartilhada não foi atualizada.`,
       )
     } finally {
       setIsPublishing(false)
@@ -432,6 +512,9 @@ function AdminPage() {
     setLoginError('')
   }
 
+  const siteHomeHref = getSiteHomeHref()
+  const hasGithubToken = githubToken.trim().length > 0
+
   if (!isAdminAuthenticated) {
     return (
       <div className="ambient-grid min-h-screen bg-background text-foreground">
@@ -440,10 +523,10 @@ function AdminPage() {
             <div className="space-y-4">
               <p className="section-eyebrow">Painel</p>
               <h1 className="display-title text-[clamp(2.8rem,11vw,4.6rem)] text-foreground">
-                Administração básica
+                ADM
               </h1>
               <p className="admin-section-copy">
-                Acesso local para editar textos, SEO, snippets, favicon e cores
+                Acesso local para editar textos, imagens, snippets, SEO e cores
                 da landing.
               </p>
             </div>
@@ -488,7 +571,7 @@ function AdminPage() {
                   Entrar no painel
                 </Button>
                 <Button asChild variant="outline" size="lg" className="w-full">
-                  <a href={SITE_HASH_ROUTE}>Voltar ao site</a>
+                  <a href={siteHomeHref}>Voltar ao site</a>
                 </Button>
               </div>
             </form>
@@ -514,6 +597,13 @@ function AdminPage() {
         className="hidden"
         onChange={handleFaviconUpload}
       />
+      <input
+        ref={ogImageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleOgImageUpload}
+      />
 
       <main className="layout-shell py-6 sm:py-8">
         <section className="admin-card space-y-6">
@@ -523,16 +613,16 @@ function AdminPage() {
               Configuração da landing
             </h1>
             <p className="admin-section-copy">
-              Edite textos, branding, cores, snippets e SEO sem backend.
-              Como esta instalação roda em GitHub Pages, o rascunho pode ficar
-              salvo neste navegador e a versão compartilhada pode ser
-              publicada atualizando o JSON do projeto no GitHub.
+              Edite textos, branding, imagens, snippets, cores e SEO sem
+              backend. Neste projeto com GitHub Pages, o botão Salvar e
+              publicar aplica a mudança no navegador atual e atualiza o JSON
+              compartilhado do site.
             </p>
           </div>
 
           <div className="admin-inline-grid">
             <Button asChild variant="outline" size="lg" className="w-full">
-              <a href={SITE_HASH_ROUTE}>Ver site publicado</a>
+              <a href={siteHomeHref}>Ver site publicado</a>
             </Button>
             <Button
               type="button"
@@ -549,58 +639,94 @@ function AdminPage() {
           <div className="rounded-[8px] border border-brand/20 bg-black/30 px-4 py-4 text-sm leading-relaxed text-foreground-muted">
             URL atual: <span className="text-foreground">{publishedUrl}</span>
           </div>
+
+          <div className="rounded-[10px] border border-brand/20 bg-black/30 px-4 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand">
+                  Token GitHub
+                </p>
+                <p className="admin-field-hint">
+                  {hasGithubToken
+                    ? 'Token configurado neste navegador. Salvar e publicar já atualiza automaticamente o repositório.'
+                    : 'Configure um token com permissão de escrita neste repositório para habilitar a publicação automática.'}
+                </p>
+              </div>
+
+              {hasGithubToken ? (
+                <span className="admin-token-chip">
+                  <Check className="size-4" />
+                  Configurado
+                </span>
+              ) : null}
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {isEditingToken ? (
+                <>
+                  <FieldStack
+                    label="Token pessoal"
+                    hint="O token fica salvo apenas no localStorage deste navegador."
+                  >
+                    <Input
+                      type="password"
+                      value={tokenInputValue}
+                      onChange={(event) => setTokenInputValue(event.target.value)}
+                      placeholder="ghp_... ou github_pat_..."
+                    />
+                  </FieldStack>
+
+                  <div className="admin-inline-grid">
+                    <Button type="button" onClick={handleSaveToken}>
+                      Salvar token
+                    </Button>
+                    {hasGithubToken ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingToken(false)
+                          setTokenInputValue('')
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    ) : null}
+                  </div>
+                </>
+              ) : (
+                <div className="admin-inline-grid">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditingToken(true)
+                      setTokenInputValue(githubToken)
+                    }}
+                  >
+                    Trocar token
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleRemoveToken}
+                  >
+                    <Trash2 className="size-5" />
+                    Remover token
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
         </section>
 
         <div className="mt-6 space-y-6">
           <AdminSection
-            icon={<Settings2 className="size-5" />}
-            title="Presets e persistência"
-            description="Gerencie o JSON base, crie predefinições locais e leve a configuração para outro navegador ou projeto."
+            icon={<FileJson className="size-5" />}
+            title="Base JSON e recuperação"
+            description="Ferramentas locais para importar, exportar e restaurar a base atual do site."
           >
-            <div className="admin-form-grid">
-              <FieldStack
-                label="Preset salvo"
-                hint="Aplique um preset salvo para substituir o conteúdo atual do site."
-              >
-                <Select
-                  value={selectedPresetId}
-                  onValueChange={setSelectedPresetId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Escolha um preset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {database.presets.map((preset) => (
-                      <SelectItem key={preset.id} value={preset.id}>
-                        {preset.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FieldStack>
-
-              <FieldStack
-                label="Nome do novo preset"
-                hint="Salva uma foto do estado atual da landing dentro da base JSON local."
-              >
-                <Input
-                  value={presetName}
-                  onChange={(event) => setPresetName(event.target.value)}
-                  placeholder="Ex: Clínica dourado claro"
-                />
-              </FieldStack>
-            </div>
-
             <div className="admin-button-grid">
-              <Button type="button" variant="outline" onClick={handleApplyPreset}>
-                Aplicar preset
-              </Button>
-              <Button type="button" variant="outline" onClick={handleCreatePreset}>
-                Salvar como preset
-              </Button>
-              <Button type="button" variant="outline" onClick={handleDeletePreset}>
-                Remover preset
-              </Button>
               <Button type="button" variant="outline" onClick={handleExport}>
                 <Download className="size-5" />
                 Exportar JSON
@@ -621,125 +747,8 @@ function AdminPage() {
 
           <AdminSection
             icon={<Globe className="size-5" />}
-            title="Publicação compartilhada"
-            description="Para que outras pessoas vejam as alterações, publique o JSON no repositório e deixe o GitHub Pages refletir a nova versão."
-          >
-            <div className="rounded-[10px] border border-brand/20 bg-black/30 px-4 py-4 text-sm leading-relaxed text-foreground-muted">
-              O botão abaixo atualiza o arquivo{' '}
-              <span className="text-foreground">site-admin-db.json</span> no
-              GitHub. Isso transforma a edição local do painel em uma
-              configuração compartilhada para os próximos visitantes do site.
-            </div>
-
-            <div className="admin-form-grid">
-              <FieldStack label="Owner">
-                <Input
-                  value={publishSettings.owner}
-                  onChange={(event) =>
-                    setPublishSettings((current) => ({
-                      ...current,
-                      owner: event.target.value,
-                    }))
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Repositório">
-                <Input
-                  value={publishSettings.repo}
-                  onChange={(event) =>
-                    setPublishSettings((current) => ({
-                      ...current,
-                      repo: event.target.value,
-                    }))
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Branch">
-                <Input
-                  value={publishSettings.branch}
-                  onChange={(event) =>
-                    setPublishSettings((current) => ({
-                      ...current,
-                      branch: event.target.value,
-                    }))
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Caminho do JSON no repo">
-                <Input
-                  value={publishSettings.path}
-                  onChange={(event) =>
-                    setPublishSettings((current) => ({
-                      ...current,
-                      path: event.target.value,
-                    }))
-                  }
-                />
-              </FieldStack>
-            </div>
-
-            <FieldStack
-              label="Token GitHub"
-              hint="Use um token pessoal com permissão de escrita no repositório. Ele fica apenas nesta sessão do painel."
-            >
-              <Input
-                type="password"
-                value={githubToken}
-                onChange={(event) => setGithubToken(event.target.value)}
-                placeholder="ghp_... ou github_pat_..."
-              />
-            </FieldStack>
-
-            <div className="admin-button-grid">
-              <Button
-                type="button"
-                onClick={handlePublishToGithub}
-                disabled={isPublishing}
-              >
-                {isPublishing ? 'Publicando...' : 'Publicar JSON no GitHub'}
-              </Button>
-            </div>
-
-            {publishFeedback ? (
-              <p className="rounded-[8px] border border-brand/18 bg-black/30 px-4 py-3 text-sm leading-relaxed text-foreground">
-                {publishFeedback}
-              </p>
-            ) : null}
-          </AdminSection>
-
-          <AdminSection
-            icon={<ShieldAlert className="size-5" />}
-            title="Domínio e aviso de suporte"
-            description="Ajustes de domínio não são feitos neste painel."
-          >
-            <div className="rounded-[10px] border border-brand/25 bg-brand/10 px-4 py-4 text-sm leading-relaxed text-foreground">
-              Para mudar o domínio publicado, entre em contato com o suporte.
-              Essa alteração é um serviço pago e não fica disponível para
-              autoatendimento neste painel.
-            </div>
-            <FieldStack
-              label="Canonical / URL principal"
-              hint="Esse campo controla SEO. Ele não troca o domínio real do GitHub Pages."
-            >
-              <Input
-                value={draftConfig.seo.canonicalUrl}
-                onChange={(event) =>
-                  updateDraft((next) => {
-                    next.seo.canonicalUrl = event.target.value
-                  })
-                }
-                placeholder="https://seudominio.com/"
-              />
-            </FieldStack>
-          </AdminSection>
-
-          <AdminSection
-            icon={<Globe className="size-5" />}
             title="Branding e SEO"
-            description="Defina título, favicon, metadados, Open Graph e configurações que afetam busca e compartilhamento."
+            description="Defina título, imagens, metadados e Open Graph sem expor opções mais técnicas no painel."
           >
             <div className="admin-form-grid">
               <FieldStack label="Título do site">
@@ -776,46 +785,32 @@ function AdminPage() {
                 />
               </FieldStack>
 
-              <FieldStack label="Locale">
+              <FieldStack label="Canonical / URL principal">
                 <Input
-                  value={draftConfig.branding.locale}
+                  value={draftConfig.seo.canonicalUrl}
                   onChange={(event) =>
                     updateDraft((next) => {
-                      next.branding.locale = event.target.value
+                      next.seo.canonicalUrl = event.target.value
                     })
                   }
+                  placeholder="https://seudominio.com/"
                 />
               </FieldStack>
             </div>
 
-            <div className="admin-form-grid">
-              <FieldStack
-                label="Favicon (URL ou data URL)"
-                hint="Você também pode subir um arquivo abaixo."
-              >
-                <Input
-                  value={draftConfig.branding.faviconUrl}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.branding.faviconUrl = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <div className="space-y-3">
-                <Label className="text-foreground">Subir favicon</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => faviconInputRef.current?.click()}
-                >
-                  <ImagePlus className="size-5" />
-                  Escolher arquivo
-                </Button>
-              </div>
-            </div>
+            <ImageField
+              label="Favicon"
+              value={draftConfig.branding.faviconUrl}
+              onChange={(value) =>
+                updateDraft((next) => {
+                  next.branding.faviconUrl = value
+                })
+              }
+              onUploadClick={() => faviconInputRef.current?.click()}
+              hint="Você pode usar caminho público, URL externa ou substituir com upload."
+              alt="Preview do favicon"
+              variant="icon"
+            />
 
             <div className="space-y-6">
               <FieldStack label="Meta title">
@@ -854,30 +849,6 @@ function AdminPage() {
               </FieldStack>
             </div>
 
-            <div className="admin-form-grid">
-              <FieldStack label="Robots">
-                <Input
-                  value={draftConfig.seo.robots}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.robots = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Twitter card">
-                <Input
-                  value={draftConfig.seo.twitterCard}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.twitterCard = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-            </div>
-
             <div className="space-y-6">
               <FieldStack label="Open Graph title">
                 <Input
@@ -902,16 +873,19 @@ function AdminPage() {
                 />
               </FieldStack>
 
-              <FieldStack label="Open Graph image">
-                <Input
-                  value={draftConfig.seo.ogImage}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.ogImage = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
+              <ImageField
+                label="Open Graph image"
+                value={draftConfig.seo.ogImage}
+                onChange={(value) =>
+                  updateDraft((next) => {
+                    next.seo.ogImage = value
+                  })
+                }
+                onUploadClick={() => ogImageInputRef.current?.click()}
+                hint="Essa imagem aparece em compartilhamentos e cards sociais."
+                alt="Preview da Open Graph image"
+                variant="wide"
+              />
             </div>
           </AdminSection>
 
@@ -1394,294 +1368,302 @@ function AdminPage() {
           <AdminSection
             icon={<FileJson className="size-5" />}
             title="Contato, formulário, footer e snippets"
-            description="Controle número de WhatsApp, labels do formulário, integração por snippets e os textos finais da página."
+            description="Controle o número de WhatsApp, a seção de orçamento, os campos do formulário e os textos finais da página."
           >
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Contato</h3>
-              <div className="admin-form-grid">
-                <FieldStack label="Número do WhatsApp">
-                  <Input
-                    value={draftConfig.contact.whatsappNumber}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.contact.whatsappNumber = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Número exibido">
-                  <Input
-                    value={draftConfig.contact.whatsappDisplay}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.contact.whatsappDisplay = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-              </div>
-              <FieldStack label="Mensagem padrão do WhatsApp">
-                <Textarea
-                  className="min-h-28"
-                  value={draftConfig.contact.defaultMessage}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.contact.defaultMessage = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Seção de orçamento</h3>
-              <div className="admin-form-grid">
-                <FieldStack label="Eyebrow">
-                  <Input
-                    value={draftConfig.quoteSection.eyebrow}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.quoteSection.eyebrow = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Título">
-                  <Input
-                    value={draftConfig.quoteSection.title}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.quoteSection.title = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-              </div>
-              <FieldStack label="Descrição">
-                <Textarea
-                  className="min-h-28"
-                  value={draftConfig.quoteSection.description}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.quoteSection.description = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-              <FieldStack label="Texto de apoio">
-                <Textarea
-                  className="min-h-28"
-                  value={draftConfig.quoteSection.supportText}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.quoteSection.supportText = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <div className="admin-form-grid">
-                <FieldStack label="Texto do botão">
-                  <Input
-                    value={draftConfig.quoteSection.submitLabel}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.quoteSection.submitLabel = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Texto auxiliar">
-                  <Input
-                    value={draftConfig.quoteSection.helperText}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.quoteSection.helperText = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Campos do formulário</h3>
-              <div className="admin-form-grid">
-                <FieldStack label="Label nome">
-                  <Input
-                    value={draftConfig.form.nameLabel}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.nameLabel = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Placeholder nome">
-                  <Input
-                    value={draftConfig.form.namePlaceholder}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.namePlaceholder = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Label telefone">
-                  <Input
-                    value={draftConfig.form.phoneLabel}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.phoneLabel = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Placeholder telefone">
-                  <Input
-                    value={draftConfig.form.phonePlaceholder}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.phonePlaceholder = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Label serviço">
-                  <Input
-                    value={draftConfig.form.serviceLabel}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.serviceLabel = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Placeholder serviço">
-                  <Input
-                    value={draftConfig.form.servicePlaceholder}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.servicePlaceholder = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Label bairro / cidade">
-                  <Input
-                    value={draftConfig.form.locationLabel}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.locationLabel = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Placeholder bairro / cidade">
-                  <Input
-                    value={draftConfig.form.locationPlaceholder}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.locationPlaceholder = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Label detalhes">
-                  <Input
-                    value={draftConfig.form.detailsLabel}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.detailsLabel = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Placeholder detalhes">
-                  <Input
-                    value={draftConfig.form.detailsPlaceholder}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.form.detailsPlaceholder = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="admin-subtitle">Opções do select de serviço</h4>
+            <div className="space-y-4">
+              <AccordionBlock
+                title="Contato"
+                description="Dados principais de contato usados na landing e no envio para o WhatsApp."
+              >
                 <div className="admin-form-grid">
-                  {draftConfig.form.serviceOptions.map((option, index) => (
-                    <FieldStack key={`${option}-${index}`} label={`Opção ${index + 1}`}>
+                  <FieldStack label="Número do WhatsApp">
+                    <Input
+                      value={draftConfig.contact.whatsappNumber}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.contact.whatsappNumber = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Número exibido">
+                    <Input
+                      value={draftConfig.contact.whatsappDisplay}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.contact.whatsappDisplay = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                </div>
+                <FieldStack label="Mensagem padrão do WhatsApp">
+                  <Textarea
+                    className="min-h-28"
+                    value={draftConfig.contact.defaultMessage}
+                    onChange={(event) =>
+                      updateDraft((next) => {
+                        next.contact.defaultMessage = event.target.value
+                      })
+                    }
+                  />
+                </FieldStack>
+              </AccordionBlock>
+
+              <AccordionBlock
+                title="Seção de orçamento"
+                description="Textos do bloco amarelo e do CTA principal do formulário."
+              >
+                <div className="admin-form-grid">
+                  <FieldStack label="Eyebrow">
+                    <Input
+                      value={draftConfig.quoteSection.eyebrow}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.quoteSection.eyebrow = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Título">
+                    <Input
+                      value={draftConfig.quoteSection.title}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.quoteSection.title = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                </div>
+                <FieldStack label="Descrição">
+                  <Textarea
+                    className="min-h-28"
+                    value={draftConfig.quoteSection.description}
+                    onChange={(event) =>
+                      updateDraft((next) => {
+                        next.quoteSection.description = event.target.value
+                      })
+                    }
+                  />
+                </FieldStack>
+                <FieldStack label="Texto de apoio">
+                  <Textarea
+                    className="min-h-28"
+                    value={draftConfig.quoteSection.supportText}
+                    onChange={(event) =>
+                      updateDraft((next) => {
+                        next.quoteSection.supportText = event.target.value
+                      })
+                    }
+                  />
+                </FieldStack>
+
+                <div className="admin-form-grid">
+                  <FieldStack label="Texto do botão">
+                    <Input
+                      value={draftConfig.quoteSection.submitLabel}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.quoteSection.submitLabel = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Texto auxiliar">
+                    <Input
+                      value={draftConfig.quoteSection.helperText}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.quoteSection.helperText = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                </div>
+              </AccordionBlock>
+
+              <AccordionBlock
+                title="Campos do formulário"
+                description="Labels, placeholders, opções do select e mensagens de validação."
+              >
+                <div className="admin-form-grid">
+                  <FieldStack label="Label nome">
+                    <Input
+                      value={draftConfig.form.nameLabel}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.nameLabel = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Placeholder nome">
+                    <Input
+                      value={draftConfig.form.namePlaceholder}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.namePlaceholder = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Label telefone">
+                    <Input
+                      value={draftConfig.form.phoneLabel}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.phoneLabel = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Placeholder telefone">
+                    <Input
+                      value={draftConfig.form.phonePlaceholder}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.phonePlaceholder = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Label serviço">
+                    <Input
+                      value={draftConfig.form.serviceLabel}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.serviceLabel = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Placeholder serviço">
+                    <Input
+                      value={draftConfig.form.servicePlaceholder}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.servicePlaceholder = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Label bairro / cidade">
+                    <Input
+                      value={draftConfig.form.locationLabel}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.locationLabel = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Placeholder bairro / cidade">
+                    <Input
+                      value={draftConfig.form.locationPlaceholder}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.locationPlaceholder = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Label detalhes">
+                    <Input
+                      value={draftConfig.form.detailsLabel}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.detailsLabel = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                  <FieldStack label="Placeholder detalhes">
+                    <Input
+                      value={draftConfig.form.detailsPlaceholder}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.form.detailsPlaceholder = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="admin-subtitle">Opções do select de serviço</h4>
+                  <div className="admin-form-grid">
+                    {draftConfig.form.serviceOptions.map((option, index) => (
+                      <FieldStack key={`${option}-${index}`} label={`Opção ${index + 1}`}>
+                        <Input
+                          value={option}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.serviceOptions[index] = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="admin-subtitle">Mensagens de validação</h4>
+                  <div className="admin-form-grid">
+                    <FieldStack label="Nome obrigatório">
                       <Input
-                        value={option}
+                        value={draftConfig.form.validationNameRequired}
                         onChange={(event) =>
                           updateDraft((next) => {
-                            next.form.serviceOptions[index] = event.target.value
+                            next.form.validationNameRequired = event.target.value
                           })
                         }
                       />
                     </FieldStack>
-                  ))}
+                    <FieldStack label="Telefone obrigatório">
+                      <Input
+                        value={draftConfig.form.validationPhoneRequired}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.form.validationPhoneRequired = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                    <FieldStack label="Serviço obrigatório">
+                      <Input
+                        value={draftConfig.form.validationServiceRequired}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.form.validationServiceRequired = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                    <FieldStack label="Detalhes obrigatórios">
+                      <Input
+                        value={draftConfig.form.validationDetailsRequired}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.form.validationDetailsRequired = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                    <FieldStack label="Fallback da localização">
+                      <Input
+                        value={draftConfig.form.locationNotProvidedLabel}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.form.locationNotProvidedLabel = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                  </div>
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="admin-subtitle">Mensagens de validação</h4>
-                <div className="admin-form-grid">
-                  <FieldStack label="Nome obrigatório">
-                    <Input
-                      value={draftConfig.form.validationNameRequired}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.validationNameRequired = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Telefone obrigatório">
-                    <Input
-                      value={draftConfig.form.validationPhoneRequired}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.validationPhoneRequired = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Serviço obrigatório">
-                    <Input
-                      value={draftConfig.form.validationServiceRequired}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.validationServiceRequired = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Detalhes obrigatórios">
-                    <Input
-                      value={draftConfig.form.validationDetailsRequired}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.validationDetailsRequired = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Fallback da localização">
-                    <Input
-                      value={draftConfig.form.locationNotProvidedLabel}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.locationNotProvidedLabel = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                </div>
-              </div>
+              </AccordionBlock>
             </div>
 
             <div className="space-y-6">
@@ -1749,13 +1731,15 @@ function AdminPage() {
             <div className="admin-card border-brand/35 bg-background/92 backdrop-blur-md">
               <div className="space-y-3">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand">
-                  {isDirty
-                    ? 'Mudanças não salvas'
-                    : 'Tudo salvo no navegador atual'}
+                  {isPublishing
+                    ? 'Publicando alterações'
+                    : isDirty
+                      ? 'Mudanças prontas para publicar'
+                      : 'Base local sincronizada'}
                 </p>
                 <p className="admin-field-hint">
                   {feedback ||
-                    'Salve para aplicar ao site e manter o estado local. Exporte o JSON para levar as predefinições para outro ambiente.'}
+                    'Salve e publique para aplicar o rascunho no navegador atual e atualizar a versão compartilhada do GitHub Pages.'}
                 </p>
               </div>
 
@@ -1764,13 +1748,17 @@ function AdminPage() {
                   type="button"
                   variant="outline"
                   onClick={handleDiscard}
-                  disabled={!isDirty}
+                  disabled={!isDirty || isPublishing}
                 >
                   Descartar rascunho
                 </Button>
-                <Button type="button" onClick={handleSave}>
+                <Button
+                  type="button"
+                  onClick={handleSaveAndPublish}
+                  disabled={isPublishing}
+                >
                   <Save className="size-5" />
-                  Salvar alterações
+                  {isPublishing ? 'Publicando...' : 'Salvar e publicar'}
                 </Button>
               </div>
             </div>
