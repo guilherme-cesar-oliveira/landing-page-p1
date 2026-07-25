@@ -1,0 +1,367 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-25T00:00:00.000Z",
+  "currentPresetId": "default",
+  "currentConfig": {
+    "branding": {
+      "locale": "pt-BR",
+      "siteTitle": "Junior Soluções Residenciais",
+      "brandName": "Junior",
+      "brandSubtitle": "Soluções residenciais",
+      "faviconUrl": "./favicon.svg"
+    },
+    "contact": {
+      "whatsappNumber": "5547984419705",
+      "whatsappDisplay": "(47) 98441-9705",
+      "defaultMessage": "Olá! Vim pela landing e gostaria de um orçamento."
+    },
+    "colors": {
+      "background": "#0b0a08",
+      "surface": "#12100d",
+      "surfaceStrong": "#181512",
+      "foreground": "#f6f1e8",
+      "foregroundMuted": "#9c9488",
+      "brand": "#d9ab43",
+      "brandForeground": "#080705",
+      "border": "rgba(217, 171, 67, 0.34)",
+      "ring": "rgba(244, 196, 78, 0.72)",
+      "whatsapp": "#43a76d",
+      "whatsappForeground": "#f5fff9"
+    },
+    "seo": {
+      "title": "Junior Soluções Residenciais",
+      "description": "Montagem, reparo e instalação com atendimento rápido por WhatsApp para serviços residenciais e comerciais.",
+      "keywords": "manutenção residencial, manutenção comercial, montagem de móveis, reparos elétricos, reparos hidráulicos, marido de aluguel",
+      "canonicalUrl": "https://guilherme-cesar-oliveira.github.io/landing-page-p1/",
+      "robots": "index,follow",
+      "ogTitle": "Junior Soluções Residenciais",
+      "ogDescription": "Solicite orçamento rápido por WhatsApp para montagem, reparos e instalações residenciais e comerciais.",
+      "ogImage": "./hero-share.png",
+      "ogType": "website",
+      "twitterCard": "summary_large_image",
+      "themeColor": "#0b0a08"
+    },
+    "snippets": {
+      "head": "",
+      "body": ""
+    },
+    "header": {
+      "ctaLabel": "WhatsApp"
+    },
+    "hero": {
+      "eyebrow": "Soluções em manutenção · residencial e comercial",
+      "titleLineOne": "Casa",
+      "titleLineTwo": "em",
+      "titleHighlight": "ordem.",
+      "description": "Montagem, reparo, instalação. Você chama, eu resolvo — rápido, direto e sem enrolação.",
+      "primaryCtaLabel": "Solicitar orçamento",
+      "secondaryCtaLabel": "Ver serviços"
+    },
+    "sidePanel": {
+      "eyebrow": "Atendimento residencial",
+      "responseValue": "24h",
+      "responseDescription": "Resposta rápida no WhatsApp, com escopo claro e valor fechado antes de começar.",
+      "tags": [
+        "Montagem de móveis",
+        "Reparos elétricos",
+        "Manutenção geral"
+      ],
+      "footerNote": "Olá! Vim pela landing e gostaria de um orçamento. O resto a gente combina no atendimento."
+    },
+    "metrics": [
+      {
+        "value": "300+",
+        "label": "Atendimentos"
+      },
+      {
+        "value": "5.0",
+        "label": "Avaliação média"
+      },
+      {
+        "value": "24h",
+        "label": "Resposta"
+      }
+    ],
+    "servicesSection": {
+      "eyebrow": "Índice",
+      "title": "O que eu resolvo",
+      "description": "Seis frentes de trabalho, direto ao ponto."
+    },
+    "services": [
+      {
+        "number": "01",
+        "title": "Montagem de móveis",
+        "description": "Guarda-roupas, cama, estante, cozinha planejada. Toda a linha de móveis do convencional ao corporativo."
+      },
+      {
+        "number": "02",
+        "title": "Reparos elétricos",
+        "description": "Tomadas, interruptores, luminárias. Elétrica e reparo em geral."
+      },
+      {
+        "number": "03",
+        "title": "Reparos hidráulicos",
+        "description": "Vazamentos, registros, torneiras, chuveiros. Hidráulica em geral."
+      },
+      {
+        "number": "04",
+        "title": "Instalação de itens",
+        "description": "Prateleiras, quadros, cortinas, suporte de TV."
+      },
+      {
+        "number": "05",
+        "title": "Manutenção geral",
+        "description": "Portas, dobradiças, fechaduras, rejuntes, limpeza de caixa d’água, toda a parte de manutenção residencial."
+      },
+      {
+        "number": "06",
+        "title": "Pintura e retoques",
+        "description": "Paredes, ambientes pequenos, acabamentos."
+      }
+    ],
+    "processSection": {
+      "eyebrow": "Processo",
+      "title": "Do pedido à entrega",
+      "description": "Sem mistério: você chama, a gente combina e o serviço termina limpo e funcionando."
+    },
+    "processSteps": [
+      {
+        "number": "01",
+        "title": "Você chama",
+        "description": "Formulário ou WhatsApp — conta o que precisa."
+      },
+      {
+        "number": "02",
+        "title": "Combinamos",
+        "description": "Escopo, prazo e valor fechados antes de tudo."
+      },
+      {
+        "number": "03",
+        "title": "Está pronto",
+        "description": "Serviço feito, local limpo, tudo funcionando."
+      }
+    ],
+    "quoteSection": {
+      "eyebrow": "Solicitação",
+      "title": "Peça seu orçamento",
+      "description": "Preencha o essencial e abra a conversa com a mensagem pronta no WhatsApp.",
+      "supportText": "Nome, contato, serviço, região e detalhes. O suficiente para responder rápido e sem ida e volta desnecessária.",
+      "submitLabel": "Enviar pelo WhatsApp",
+      "helperText": "Ao enviar, o WhatsApp abre com sua mensagem pronta."
+    },
+    "form": {
+      "nameLabel": "Nome",
+      "namePlaceholder": "Seu nome",
+      "phoneLabel": "Telefone",
+      "phonePlaceholder": "(00) 00000-0000",
+      "serviceLabel": "Serviço",
+      "servicePlaceholder": "Selecione",
+      "locationLabel": "Bairro / Cidade",
+      "locationPlaceholder": "Ex: Centro, São Paulo",
+      "detailsLabel": "Descreva o que precisa",
+      "detailsPlaceholder": "Conte os detalhes...",
+      "serviceOptions": [
+        "Montagem de móveis",
+        "Reparo elétrico",
+        "Reparo hidráulico",
+        "Instalação de itens",
+        "Manutenção geral",
+        "Pintura e retoques",
+        "Outro"
+      ],
+      "validationNameRequired": "Preencha seu nome.",
+      "validationPhoneRequired": "Informe um telefone para contato.",
+      "validationServiceRequired": "Selecione o serviço.",
+      "validationDetailsRequired": "Descreva o que precisa.",
+      "locationNotProvidedLabel": "Não informado"
+    },
+    "footer": {
+      "whatsappLabelPrefix": "WhatsApp",
+      "legalText": "Atendimento em sua região · © 2026"
+    }
+  },
+  "presets": [
+    {
+      "id": "default",
+      "name": "Padrão Junior",
+      "config": {
+        "branding": {
+          "locale": "pt-BR",
+          "siteTitle": "Junior Soluções Residenciais",
+          "brandName": "Junior",
+          "brandSubtitle": "Soluções residenciais",
+          "faviconUrl": "./favicon.svg"
+        },
+        "contact": {
+          "whatsappNumber": "5547984419705",
+          "whatsappDisplay": "(47) 98441-9705",
+          "defaultMessage": "Olá! Vim pela landing e gostaria de um orçamento."
+        },
+        "colors": {
+          "background": "#0b0a08",
+          "surface": "#12100d",
+          "surfaceStrong": "#181512",
+          "foreground": "#f6f1e8",
+          "foregroundMuted": "#9c9488",
+          "brand": "#d9ab43",
+          "brandForeground": "#080705",
+          "border": "rgba(217, 171, 67, 0.34)",
+          "ring": "rgba(244, 196, 78, 0.72)",
+          "whatsapp": "#43a76d",
+          "whatsappForeground": "#f5fff9"
+        },
+        "seo": {
+          "title": "Junior Soluções Residenciais",
+          "description": "Montagem, reparo e instalação com atendimento rápido por WhatsApp para serviços residenciais e comerciais.",
+          "keywords": "manutenção residencial, manutenção comercial, montagem de móveis, reparos elétricos, reparos hidráulicos, marido de aluguel",
+          "canonicalUrl": "https://guilherme-cesar-oliveira.github.io/landing-page-p1/",
+          "robots": "index,follow",
+          "ogTitle": "Junior Soluções Residenciais",
+          "ogDescription": "Solicite orçamento rápido por WhatsApp para montagem, reparos e instalações residenciais e comerciais.",
+          "ogImage": "./hero-share.png",
+          "ogType": "website",
+          "twitterCard": "summary_large_image",
+          "themeColor": "#0b0a08"
+        },
+        "snippets": {
+          "head": "",
+          "body": ""
+        },
+        "header": {
+          "ctaLabel": "WhatsApp"
+        },
+        "hero": {
+          "eyebrow": "Soluções em manutenção · residencial e comercial",
+          "titleLineOne": "Casa",
+          "titleLineTwo": "em",
+          "titleHighlight": "ordem.",
+          "description": "Montagem, reparo, instalação. Você chama, eu resolvo — rápido, direto e sem enrolação.",
+          "primaryCtaLabel": "Solicitar orçamento",
+          "secondaryCtaLabel": "Ver serviços"
+        },
+        "sidePanel": {
+          "eyebrow": "Atendimento residencial",
+          "responseValue": "24h",
+          "responseDescription": "Resposta rápida no WhatsApp, com escopo claro e valor fechado antes de começar.",
+          "tags": [
+            "Montagem de móveis",
+            "Reparos elétricos",
+            "Manutenção geral"
+          ],
+          "footerNote": "Olá! Vim pela landing e gostaria de um orçamento. O resto a gente combina no atendimento."
+        },
+        "metrics": [
+          {
+            "value": "300+",
+            "label": "Atendimentos"
+          },
+          {
+            "value": "5.0",
+            "label": "Avaliação média"
+          },
+          {
+            "value": "24h",
+            "label": "Resposta"
+          }
+        ],
+        "servicesSection": {
+          "eyebrow": "Índice",
+          "title": "O que eu resolvo",
+          "description": "Seis frentes de trabalho, direto ao ponto."
+        },
+        "services": [
+          {
+            "number": "01",
+            "title": "Montagem de móveis",
+            "description": "Guarda-roupas, cama, estante, cozinha planejada. Toda a linha de móveis do convencional ao corporativo."
+          },
+          {
+            "number": "02",
+            "title": "Reparos elétricos",
+            "description": "Tomadas, interruptores, luminárias. Elétrica e reparo em geral."
+          },
+          {
+            "number": "03",
+            "title": "Reparos hidráulicos",
+            "description": "Vazamentos, registros, torneiras, chuveiros. Hidráulica em geral."
+          },
+          {
+            "number": "04",
+            "title": "Instalação de itens",
+            "description": "Prateleiras, quadros, cortinas, suporte de TV."
+          },
+          {
+            "number": "05",
+            "title": "Manutenção geral",
+            "description": "Portas, dobradiças, fechaduras, rejuntes, limpeza de caixa d’água, toda a parte de manutenção residencial."
+          },
+          {
+            "number": "06",
+            "title": "Pintura e retoques",
+            "description": "Paredes, ambientes pequenos, acabamentos."
+          }
+        ],
+        "processSection": {
+          "eyebrow": "Processo",
+          "title": "Do pedido à entrega",
+          "description": "Sem mistério: você chama, a gente combina e o serviço termina limpo e funcionando."
+        },
+        "processSteps": [
+          {
+            "number": "01",
+            "title": "Você chama",
+            "description": "Formulário ou WhatsApp — conta o que precisa."
+          },
+          {
+            "number": "02",
+            "title": "Combinamos",
+            "description": "Escopo, prazo e valor fechados antes de tudo."
+          },
+          {
+            "number": "03",
+            "title": "Está pronto",
+            "description": "Serviço feito, local limpo, tudo funcionando."
+          }
+        ],
+        "quoteSection": {
+          "eyebrow": "Solicitação",
+          "title": "Peça seu orçamento",
+          "description": "Preencha o essencial e abra a conversa com a mensagem pronta no WhatsApp.",
+          "supportText": "Nome, contato, serviço, região e detalhes. O suficiente para responder rápido e sem ida e volta desnecessária.",
+          "submitLabel": "Enviar pelo WhatsApp",
+          "helperText": "Ao enviar, o WhatsApp abre com sua mensagem pronta."
+        },
+        "form": {
+          "nameLabel": "Nome",
+          "namePlaceholder": "Seu nome",
+          "phoneLabel": "Telefone",
+          "phonePlaceholder": "(00) 00000-0000",
+          "serviceLabel": "Serviço",
+          "servicePlaceholder": "Selecione",
+          "locationLabel": "Bairro / Cidade",
+          "locationPlaceholder": "Ex: Centro, São Paulo",
+          "detailsLabel": "Descreva o que precisa",
+          "detailsPlaceholder": "Conte os detalhes...",
+          "serviceOptions": [
+            "Montagem de móveis",
+            "Reparo elétrico",
+            "Reparo hidráulico",
+            "Instalação de itens",
+            "Manutenção geral",
+            "Pintura e retoques",
+            "Outro"
+          ],
+          "validationNameRequired": "Preencha seu nome.",
+          "validationPhoneRequired": "Informe um telefone para contato.",
+          "validationServiceRequired": "Selecione o serviço.",
+          "validationDetailsRequired": "Descreva o que precisa.",
+          "locationNotProvidedLabel": "Não informado"
+        },
+        "footer": {
+          "whatsappLabelPrefix": "WhatsApp",
+          "legalText": "Atendimento em sua região · © 2026"
+        }
+      }
+    }
+  ]
+}

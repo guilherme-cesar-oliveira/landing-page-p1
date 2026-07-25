@@ -206,6 +206,42 @@
   .hero-copy {
     @apply text-[1.15rem] leading-relaxed text-foreground-muted sm:text-[1.32rem];
   }
+
+  .admin-card {
+    @apply rounded-[10px] border border-brand/18 bg-[linear-gradient(180deg,rgba(16,14,11,0.94)_0%,rgba(10,9,7,0.92)_100%)] px-4 py-5 shadow-[0_26px_70px_-52px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.02)] sm:px-6 sm:py-6;
+  }
+
+  .admin-icon {
+    @apply grid size-11 shrink-0 place-items-center rounded-[8px] border border-brand/20 bg-brand/10 text-brand;
+  }
+
+  .admin-section-title {
+    @apply font-display text-[2.1rem] uppercase leading-[0.96] tracking-[0.018em] text-foreground sm:text-[2.6rem];
+  }
+
+  .admin-subtitle {
+    @apply text-sm font-extrabold uppercase tracking-[0.28em] text-brand;
+  }
+
+  .admin-section-copy {
+    @apply text-base leading-relaxed text-foreground-muted sm:text-[1.05rem];
+  }
+
+  .admin-field-hint {
+    @apply text-sm leading-relaxed text-foreground-muted;
+  }
+
+  .admin-form-grid {
+    @apply grid gap-4 md:grid-cols-2;
+  }
+
+  .admin-inline-grid {
+    @apply grid gap-3 sm:grid-cols-2;
+  }
+
+  .admin-button-grid {
+    @apply grid gap-3 md:grid-cols-2 xl:grid-cols-3;
+  }
 }
 
 @keyframes reveal-up {

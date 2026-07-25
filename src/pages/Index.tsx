@@ -18,19 +18,10 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  DEFAULT_WHATSAPP_MESSAGE,
-  HERO_EYEBROW,
-  METRICS,
-  PROCESS_STEPS,
-  SERVICE_HIGHLIGHTS,
-  SERVICE_OPTIONS,
-  WHATSAPP_DISPLAY_NUMBER,
-} from '@/lib/content'
-import {
   buildQuoteWhatsAppUrl,
-  GENERIC_WHATSAPP_URL,
   type QuoteFormValues,
 } from '@/lib/quote'
+import { useSiteConfig } from '@/lib/use-site-config'
 import { cn } from '@/lib/utils'
 
 const initialFormValues: QuoteFormValues = {
@@ -41,7 +32,15 @@ const initialFormValues: QuoteFormValues = {
   details: '',
 }
 
-function BrandMark({ className }: { className?: string }) {
+function BrandMark({
+  brandName,
+  brandSubtitle,
+  className,
+}: {
+  brandName: string
+  brandSubtitle: string
+  className?: string
+}) {
   return (
     <div className={cn('flex items-center gap-4', className)}>
       <div className="grid size-12 shrink-0 place-items-center border border-brand/90 bg-black/35 text-brand shadow-[0_18px_42px_-28px_rgba(217,171,67,0.78)] sm:size-13">
@@ -63,10 +62,10 @@ function BrandMark({ className }: { className?: string }) {
       </div>
       <div className="min-w-0">
         <p className="display-wordmark text-[2.15rem] text-foreground">
-          Junior
+          {brandName}
         </p>
         <p className="mt-1 text-[0.7rem] font-medium uppercase tracking-[0.46em] text-foreground-muted sm:text-xs">
-          {'Solu\u00e7\u00f5es residenciais'}
+          {brandSubtitle}
         </p>
       </div>
     </div>
@@ -114,6 +113,7 @@ function openExternalUrl(url: string) {
 }
 
 function Index() {
+  const { currentConfig, genericWhatsAppUrl } = useSiteConfig()
   const servicesRef = useRef<HTMLElement | null>(null)
   const quoteRef = useRef<HTMLElement | null>(null)
   const [formValues, setFormValues] = useState(initialFormValues)
@@ -130,19 +130,19 @@ function Index() {
     const nextErrors: Partial<Record<keyof QuoteFormValues, string>> = {}
 
     if (!values.name.trim()) {
-      nextErrors.name = 'Preencha seu nome.'
+      nextErrors.name = currentConfig.form.validationNameRequired
     }
 
     if (!values.phone.trim()) {
-      nextErrors.phone = 'Informe um telefone para contato.'
+      nextErrors.phone = currentConfig.form.validationPhoneRequired
     }
 
     if (!values.service.trim()) {
-      nextErrors.service = 'Selecione o servi\u00e7o.'
+      nextErrors.service = currentConfig.form.validationServiceRequired
     }
 
     if (!values.details.trim()) {
-      nextErrors.details = 'Descreva o que precisa.'
+      nextErrors.details = currentConfig.form.validationDetailsRequired
     }
 
     return nextErrors
@@ -175,17 +175,20 @@ function Index() {
       return
     }
 
-    openExternalUrl(buildQuoteWhatsAppUrl(formValues))
+    openExternalUrl(buildQuoteWhatsAppUrl(formValues, currentConfig))
   }
 
   return (
     <div className="ambient-grid min-h-screen bg-background text-foreground">
       <header className="border-b border-brand/80 bg-background/95 shadow-[0_20px_50px_-42px_rgba(217,171,67,0.5)] backdrop-blur-sm">
         <div className="layout-shell flex items-center justify-between gap-4 py-4 sm:py-5">
-          <BrandMark />
+          <BrandMark
+            brandName={currentConfig.branding.brandName}
+            brandSubtitle={currentConfig.branding.brandSubtitle}
+          />
           <Button asChild variant="gold" className="gold-glow h-12 px-5">
-            <a href={GENERIC_WHATSAPP_URL} target="_blank" rel="noreferrer">
-              WhatsApp
+            <a href={genericWhatsAppUrl} target="_blank" rel="noreferrer">
+              {currentConfig.header.ctaLabel}
             </a>
           </Button>
         </div>
@@ -198,17 +201,17 @@ function Index() {
 
           <div className="layout-shell grid gap-12 py-14 sm:py-16 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end lg:gap-16 lg:py-20">
             <div className="reveal-up max-w-[660px] space-y-8">
-              <p className="section-eyebrow">{HERO_EYEBROW}</p>
+              <p className="section-eyebrow">{currentConfig.hero.eyebrow}</p>
               <h1 className="display-hero text-[clamp(4.4rem,20vw,8.7rem)] text-foreground">
-                <span className="block">Casa</span>
-                <span className="block">em</span>
-                <span className="block text-brand">ordem.</span>
+                <span className="block">{currentConfig.hero.titleLineOne}</span>
+                <span className="block">{currentConfig.hero.titleLineTwo}</span>
+                <span className="block text-brand">
+                  {currentConfig.hero.titleHighlight}
+                </span>
               </h1>
 
               <p className="hero-copy max-w-xl">
-                {
-                  'Montagem, reparo, instala\u00e7\u00e3o. Voc\u00ea chama, eu resolvo \u2014 r\u00e1pido, direto e sem enrola\u00e7\u00e3o.'
-                }
+                {currentConfig.hero.description}
               </p>
 
               <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
@@ -219,7 +222,7 @@ function Index() {
                   onClick={() => scrollToSection('quote')}
                 >
                   <MessageCircleMore className="size-5" />
-                  {'Solicitar or\u00e7amento'}
+                  {currentConfig.hero.primaryCtaLabel}
                 </Button>
 
                 <Button
@@ -229,7 +232,7 @@ function Index() {
                   className="w-full sm:w-auto"
                   onClick={() => scrollToSection('services')}
                 >
-                  {'Ver servi\u00e7os'}
+                  {currentConfig.hero.secondaryCtaLabel}
                   <ArrowDown className="size-5" />
                 </Button>
               </div>
@@ -239,7 +242,7 @@ function Index() {
               <div className="premium-panel border border-brand/40 px-6 py-7 sm:px-8 sm:py-8">
                 <div className="flex items-center justify-between gap-4 border-b border-brand/20 pb-5">
                   <span className="text-xs font-semibold uppercase tracking-[0.38em] text-brand">
-                    Atendimento residencial
+                    {currentConfig.sidePanel.eyebrow}
                   </span>
                   <Hammer className="size-5 text-brand" />
                 </div>
@@ -247,21 +250,15 @@ function Index() {
                 <div className="space-y-6 pt-6">
                   <div>
                     <p className="display-number text-[4.5rem] text-foreground">
-                      24h
+                      {currentConfig.sidePanel.responseValue}
                     </p>
                     <p className="mt-2 text-base leading-relaxed text-foreground-muted">
-                      {
-                        'Resposta r\u00e1pida no WhatsApp, com escopo claro e valor fechado antes de come\u00e7ar.'
-                      }
+                      {currentConfig.sidePanel.responseDescription}
                     </p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                    {[
-                      'Montagem de m\u00f3veis',
-                      'Reparos el\u00e9tricos',
-                      'Manuten\u00e7\u00e3o geral',
-                    ].map((item) => (
+                    {currentConfig.sidePanel.tags.map((item) => (
                       <div
                         key={item}
                         className="premium-card border border-brand/20 bg-black/30 px-4 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-foreground"
@@ -272,8 +269,7 @@ function Index() {
                   </div>
 
                   <p className="border-t border-brand/20 pt-6 text-sm leading-relaxed text-foreground-muted">
-                    {DEFAULT_WHATSAPP_MESSAGE} O resto a gente combina no
-                    atendimento.
+                    {currentConfig.sidePanel.footerNote}
                   </p>
                 </div>
               </div>
@@ -283,8 +279,8 @@ function Index() {
 
         <section className="bg-brand text-brand-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
           <div className="layout-shell grid grid-cols-3 gap-3 py-10 text-center sm:gap-6 sm:py-12">
-            {METRICS.map((metric) => (
-              <div key={metric.label} className="space-y-2">
+            {currentConfig.metrics.map((metric) => (
+              <div key={`${metric.label}-${metric.value}`} className="space-y-2">
                 <p className="display-number text-[clamp(3.2rem,11vw,6.3rem)]">
                   {metric.value}
                 </p>
@@ -303,15 +299,15 @@ function Index() {
         >
           <div className="layout-shell py-14 sm:py-16 lg:py-20">
             <SectionHeading
-              eyebrow={'\u00cdndice'}
-              title="O que eu resolvo"
-              description="Seis frentes de trabalho, direto ao ponto."
+              eyebrow={currentConfig.servicesSection.eyebrow}
+              title={currentConfig.servicesSection.title}
+              description={currentConfig.servicesSection.description}
             />
 
             <div className="mt-10 grid gap-px bg-brand/22 lg:mt-12 lg:grid-cols-2">
-              {SERVICE_HIGHLIGHTS.map((service) => (
+              {currentConfig.services.map((service) => (
                 <article
-                  key={service.title}
+                  key={service.number}
                   className="premium-card grid grid-cols-[auto_1fr] gap-5 bg-background px-0 py-8 sm:gap-8 sm:py-10"
                 >
                   <div className="display-number w-[4.6rem] shrink-0 text-[4.6rem] text-brand">
@@ -334,15 +330,13 @@ function Index() {
         <section className="border-b border-brand/70">
           <div className="layout-shell py-14 sm:py-16 lg:py-20">
             <SectionHeading
-              eyebrow="Processo"
-              title={'Do pedido \u00e0 entrega'}
-              description={
-                'Sem mist\u00e9rio: voc\u00ea chama, a gente combina e o servi\u00e7o termina limpo e funcionando.'
-              }
+              eyebrow={currentConfig.processSection.eyebrow}
+              title={currentConfig.processSection.title}
+              description={currentConfig.processSection.description}
             />
 
             <div className="mt-10 grid gap-px bg-brand/22 lg:mt-12 lg:grid-cols-3">
-              {PROCESS_STEPS.map((step) => (
+              {currentConfig.processSteps.map((step) => (
                 <article
                   key={step.number}
                   className="premium-card space-y-6 bg-background px-0 py-8 sm:py-10"
@@ -373,20 +367,17 @@ function Index() {
             <div className="gold-glow premium-card grid gap-10 bg-brand px-5 py-8 text-brand-foreground shadow-[0_28px_80px_-44px_rgba(217,171,67,0.65)] sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-12 lg:px-12 lg:py-14">
               <div className="space-y-6 lg:space-y-8">
                 <p className="section-eyebrow text-black/70">
-                  {'Solicita\u00e7\u00e3o'}
+                  {currentConfig.quoteSection.eyebrow}
                 </p>
                 <h2 className="display-title text-[clamp(3.45rem,9vw,6rem)] text-black">
-                  {'Pe\u00e7a seu or\u00e7amento'}
+                  {currentConfig.quoteSection.title}
                 </h2>
                 <p className="max-w-md text-lg leading-relaxed text-black/70 sm:text-[1.22rem]">
-                  Preencha o essencial e abra a conversa com a mensagem pronta
-                  no WhatsApp.
+                  {currentConfig.quoteSection.description}
                 </p>
                 <div className="hidden border-t border-black/15 pt-6 lg:block">
                   <p className="max-w-sm text-base leading-relaxed text-black/65">
-                    {
-                      'Nome, contato, servi\u00e7o, regi\u00e3o e detalhes. O suficiente para responder r\u00e1pido e sem ida e volta desnecess\u00e1ria.'
-                    }
+                    {currentConfig.quoteSection.supportText}
                   </p>
                 </div>
               </div>
@@ -394,7 +385,7 @@ function Index() {
               <form className="space-y-6" onSubmit={handleSubmit} noValidate>
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-3">
-                    <Label htmlFor="name">Nome</Label>
+                    <Label htmlFor="name">{currentConfig.form.nameLabel}</Label>
                     <Input
                       id="name"
                       name="name"
@@ -402,7 +393,7 @@ function Index() {
                       onChange={(event) =>
                         updateField('name', event.target.value)
                       }
-                      placeholder="Seu nome"
+                      placeholder={currentConfig.form.namePlaceholder}
                       aria-invalid={Boolean(formErrors.name)}
                     />
                     {formErrors.name ? (
@@ -413,7 +404,7 @@ function Index() {
                   </div>
 
                   <div className="space-y-3">
-                    <Label htmlFor="phone">Telefone</Label>
+                    <Label htmlFor="phone">{currentConfig.form.phoneLabel}</Label>
                     <Input
                       id="phone"
                       name="phone"
@@ -422,7 +413,7 @@ function Index() {
                       onChange={(event) =>
                         updateField('phone', formatPhone(event.target.value))
                       }
-                      placeholder="(00) 00000-0000"
+                      placeholder={currentConfig.form.phonePlaceholder}
                       aria-invalid={Boolean(formErrors.phone)}
                     />
                     {formErrors.phone ? (
@@ -433,7 +424,9 @@ function Index() {
                   </div>
 
                   <div className="space-y-3">
-                    <Label htmlFor="service">{'Servi\u00e7o'}</Label>
+                    <Label htmlFor="service">
+                      {currentConfig.form.serviceLabel}
+                    </Label>
                     <Select
                       value={formValues.service}
                       onValueChange={(value) => updateField('service', value)}
@@ -442,10 +435,12 @@ function Index() {
                         id="service"
                         aria-invalid={Boolean(formErrors.service)}
                       >
-                        <SelectValue placeholder="Selecione" />
+                        <SelectValue
+                          placeholder={currentConfig.form.servicePlaceholder}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        {SERVICE_OPTIONS.map((service) => (
+                        {currentConfig.form.serviceOptions.map((service) => (
                           <SelectItem key={service} value={service}>
                             {service}
                           </SelectItem>
@@ -460,7 +455,9 @@ function Index() {
                   </div>
 
                   <div className="space-y-3">
-                    <Label htmlFor="location">Bairro / Cidade</Label>
+                    <Label htmlFor="location">
+                      {currentConfig.form.locationLabel}
+                    </Label>
                     <Input
                       id="location"
                       name="location"
@@ -468,13 +465,15 @@ function Index() {
                       onChange={(event) =>
                         updateField('location', event.target.value)
                       }
-                      placeholder={'Ex: Centro, S\u00e3o Paulo'}
+                      placeholder={currentConfig.form.locationPlaceholder}
                       aria-invalid={Boolean(formErrors.location)}
                     />
                   </div>
 
                   <div className="space-y-3 md:col-span-2">
-                    <Label htmlFor="details">Descreva o que precisa</Label>
+                    <Label htmlFor="details">
+                      {currentConfig.form.detailsLabel}
+                    </Label>
                     <Textarea
                       id="details"
                       name="details"
@@ -482,7 +481,7 @@ function Index() {
                       onChange={(event) =>
                         updateField('details', event.target.value)
                       }
-                      placeholder="Conte os detalhes..."
+                      placeholder={currentConfig.form.detailsPlaceholder}
                       aria-invalid={Boolean(formErrors.details)}
                     />
                     {formErrors.details ? (
@@ -501,10 +500,10 @@ function Index() {
                     className="whatsapp-glow w-full"
                   >
                     <MessageCircleMore className="size-5" />
-                    Enviar pelo WhatsApp
+                    {currentConfig.quoteSection.submitLabel}
                   </Button>
                   <p className="text-center text-sm leading-relaxed text-black/58 sm:text-base">
-                    Ao enviar, o WhatsApp abre com sua mensagem pronta.
+                    {currentConfig.quoteSection.helperText}
                   </p>
                 </div>
               </form>
@@ -515,19 +514,24 @@ function Index() {
 
       <footer className="border-t border-brand/70 bg-background">
         <div className="layout-shell flex flex-col items-start gap-6 py-10 pb-24 text-left sm:py-12 sm:pb-14">
-          <BrandMark className="justify-start" />
+          <BrandMark
+            brandName={currentConfig.branding.brandName}
+            brandSubtitle={currentConfig.branding.brandSubtitle}
+            className="justify-start"
+          />
 
           <div className="space-y-3 text-sm leading-relaxed text-foreground-muted sm:text-base">
             <a
-              href={GENERIC_WHATSAPP_URL}
+              href={genericWhatsAppUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-start gap-2 text-foreground transition-colors hover:text-brand"
             >
               <PhoneCall className="size-4" />
-              WhatsApp {WHATSAPP_DISPLAY_NUMBER}
+              {currentConfig.footer.whatsappLabelPrefix}{' '}
+              {currentConfig.contact.whatsappDisplay}
             </a>
-            <p>{'Atendimento em sua regi\u00e3o \u00b7 \u00a9 2026'}</p>
+            <p>{currentConfig.footer.legalText}</p>
           </div>
         </div>
       </footer>
@@ -539,10 +543,10 @@ function Index() {
         className="whatsapp-glow fixed bottom-4 right-4 z-30 size-16 border-4 border-background transition-transform duration-300 hover:scale-[1.03] lg:bottom-8 lg:right-8"
       >
         <a
-          href={GENERIC_WHATSAPP_URL}
+          href={genericWhatsAppUrl}
           target="_blank"
           rel="noreferrer"
-          aria-label="Falar no WhatsApp"
+          aria-label={`${currentConfig.footer.whatsappLabelPrefix} ${currentConfig.contact.whatsappDisplay}`}
         >
           <MessageCircleMore className="size-7" />
         </a>
