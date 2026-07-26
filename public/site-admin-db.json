@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-07-25T00:00:00.000Z",
+  "updatedAt": "2026-07-26T03:12:28.287Z",
   "currentPresetId": "default",
   "currentConfig": {
     "branding": {
@@ -21,7 +21,7 @@
       "surfaceStrong": "#181512",
       "foreground": "#f6f1e8",
       "foregroundMuted": "#9c9488",
-      "brand": "#d9ab43",
+      "brand": "#00ff80",
       "brandForeground": "#080705",
       "border": "rgba(217, 171, 67, 0.34)",
       "ring": "rgba(244, 196, 78, 0.72)",
@@ -203,7 +203,7 @@
           "surfaceStrong": "#181512",
           "foreground": "#f6f1e8",
           "foregroundMuted": "#9c9488",
-          "brand": "#d9ab43",
+          "brand": "#00ff80",
           "brandForeground": "#080705",
           "border": "rgba(217, 171, 67, 0.34)",
           "ring": "rgba(244, 196, 78, 0.72)",
