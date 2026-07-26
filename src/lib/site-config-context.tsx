@@ -7,7 +7,7 @@ import {
 } from 'react'
 
 import {
-  ADMIN_CREDENTIALS,
+  ADMIN_RUNTIME_AUTH_STORAGE_KEY,
   ADMIN_SESSION_STORAGE_KEY,
   SITE_DATABASE_STORAGE_KEY,
   SITE_DATABASE_URL,
@@ -35,7 +35,7 @@ type SiteConfigContextValue = {
   exportDatabase: () => string
   importDatabase: (raw: string) => { ok: boolean; error?: string }
   resetDatabase: () => void
-  signIn: (username: string, password: string) => boolean
+  signIn: () => void
   signOut: () => void
   publishedUrl: string
   genericWhatsAppUrl: string
@@ -54,6 +54,13 @@ function parseStoredDatabase(raw: string | null) {
   } catch {
     return null
   }
+}
+
+function hasStoredAdminRuntimeAuth() {
+  return Boolean(
+    window.localStorage.getItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY) ??
+      window.sessionStorage.getItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY),
+  )
 }
 
 async function loadSourceDatabase() {
@@ -253,7 +260,8 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
         window.localStorage.getItem(SITE_DATABASE_STORAGE_KEY),
       )
       const session =
-        window.localStorage.getItem(ADMIN_SESSION_STORAGE_KEY) === 'true'
+        window.localStorage.getItem(ADMIN_SESSION_STORAGE_KEY) === 'true' &&
+        hasStoredAdminRuntimeAuth()
 
       if (!active) {
         return
@@ -385,21 +393,15 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
         setDatabase(nextSource)
         persistDatabase(nextSource)
       },
-      signIn(username, password) {
-        const isValid =
-          username === ADMIN_CREDENTIALS.username &&
-          password === ADMIN_CREDENTIALS.password
-
-        if (isValid) {
-          setIsAdminAuthenticated(true)
-          window.localStorage.setItem(ADMIN_SESSION_STORAGE_KEY, 'true')
-        }
-
-        return isValid
+      signIn() {
+        setIsAdminAuthenticated(true)
+        window.localStorage.setItem(ADMIN_SESSION_STORAGE_KEY, 'true')
       },
       signOut() {
         setIsAdminAuthenticated(false)
         window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY)
+        window.localStorage.removeItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
+        window.sessionStorage.removeItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
       },
       publishedUrl: window.location.href.split('#')[0],
       genericWhatsAppUrl: buildGenericWhatsAppUrl(database.currentConfig),

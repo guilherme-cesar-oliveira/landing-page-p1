@@ -3,11 +3,8 @@ export const SITE_HASH_ROUTE = '#/'
 export const SITE_DATABASE_URL = 'site-admin-db.json'
 export const SITE_DATABASE_STORAGE_KEY = 'landing-page.site-database.v1'
 export const ADMIN_SESSION_STORAGE_KEY = 'landing-page.admin-session.v1'
-
-export const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'junior2026',
-} as const
+export const ADMIN_RUNTIME_AUTH_STORAGE_KEY =
+  'landing-page.admin-runtime-auth.v1'
 
 export type QuoteFormValues = {
   name: string

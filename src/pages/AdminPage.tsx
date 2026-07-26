@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  ADMIN_CREDENTIALS,
+  ADMIN_RUNTIME_AUTH_STORAGE_KEY,
   SITE_HASH_ROUTE,
   cloneSiteConfig,
   resolvePublicAssetUrl,
@@ -32,8 +32,6 @@ import {
   type SiteDatabase,
 } from '@/lib/site-config'
 import { useSiteConfig } from '@/lib/use-site-config'
-
-const ADMIN_RUNTIME_AUTH_STORAGE_KEY = 'landing-page.admin-runtime-auth.v1'
 
 type RuntimeAdminAuth = {
   username: string
@@ -110,6 +108,10 @@ function clearRuntimeAdminAuth() {
 
   window.localStorage.removeItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
   window.sessionStorage.removeItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
+}
+
+function buildBasicAuthorizationValue(auth: RuntimeAdminAuth) {
+  return `Basic ${btoa(`${auth.username}:${auth.password}`)}`
 }
 
 function resolveWorkerPublishUrl(endpoint: string) {
@@ -360,6 +362,7 @@ function AdminPage() {
   const [feedback, setFeedback] = useState('')
   const [loginError, setLoginError] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
+  const [isSigningIn, setIsSigningIn] = useState(false)
   const [loginValues, setLoginValues] = useState({
     username: '',
     password: '',
@@ -372,21 +375,6 @@ function AdminPage() {
     setDraftConfig(cloneSiteConfig(currentConfig))
     setIsDirty(false)
   }, [currentConfig])
-
-  useEffect(() => {
-    if (!isAdminAuthenticated) {
-      return
-    }
-
-    if (getStoredRuntimeAdminAuth()) {
-      return
-    }
-
-    storeRuntimeAdminAuth({
-      username: ADMIN_CREDENTIALS.username,
-      password: ADMIN_CREDENTIALS.password,
-    })
-  }, [isAdminAuthenticated])
 
   function updateDraft(mutator: (nextConfig: typeof draftConfig) => void) {
     setDraftConfig((current) => {
@@ -483,7 +471,7 @@ function AdminPage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`,
+        Authorization: buildBasicAuthorizationValue(auth),
       },
       body: JSON.stringify({
         database: nextDatabase,
@@ -514,6 +502,34 @@ function AdminPage() {
     return payload
   }
 
+  async function authenticateWithWorker(endpoint: string, auth: RuntimeAdminAuth) {
+    const response = await fetch(new URL('auth', resolveWorkerPublishUrl(endpoint)).toString(), {
+      method: 'POST',
+      headers: {
+        Authorization: buildBasicAuthorizationValue(auth),
+      },
+    })
+
+    let payload: { ok?: boolean; error?: string } | null = null
+
+    try {
+      payload = (await response.json()) as { ok?: boolean; error?: string }
+    } catch {
+      payload = null
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        payload?.error ||
+          (response.status === 404
+            ? 'O Worker ainda não foi atualizado com a rota de autenticação.'
+            : `O backend de autenticação recusou o login (${response.status}).`),
+      )
+    }
+
+    return payload
+  }
+
   function handleLocalSignOut() {
     clearRuntimeAdminAuth()
     setLoginValues({
@@ -533,9 +549,14 @@ function AdminPage() {
       return
     }
 
-    const auth = getStoredRuntimeAdminAuth() ?? {
-      username: ADMIN_CREDENTIALS.username,
-      password: ADMIN_CREDENTIALS.password,
+    const auth = getStoredRuntimeAdminAuth()
+
+    if (!auth) {
+      setFeedback(
+        'Faça login novamente para restaurar a autenticação com o backend do admin.',
+      )
+      handleLocalSignOut()
+      return
     }
 
     const nextDatabase = buildDatabaseSnapshot()
@@ -563,21 +584,44 @@ function AdminPage() {
     }
   }
 
-  function handleLogin(event: FormEvent<HTMLFormElement>) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const endpoint = getEmbeddedPublishEndpoint()
+    const auth = {
+      username: loginValues.username.trim(),
+      password: loginValues.password,
+    }
 
-    const success = signIn(loginValues.username.trim(), loginValues.password)
-
-    if (!success) {
-      setLoginError('Login inválido. Confira o usuário e a senha fixos.')
+    if (!endpoint) {
+      setLoginError('O endpoint do backend de autenticação ainda não foi configurado.')
       return
     }
 
+    if (!auth.username || !auth.password) {
+      setLoginError('Informe usuário e senha para acessar o painel.')
+      return
+    }
+
+    setIsSigningIn(true)
     setLoginError('')
-    storeRuntimeAdminAuth({
-      username: loginValues.username.trim(),
-      password: loginValues.password,
-    })
+
+    try {
+      await authenticateWithWorker(endpoint, auth)
+      storeRuntimeAdminAuth(auth)
+      signIn()
+      setLoginValues((current) => ({
+        ...current,
+        password: '',
+      }))
+    } catch (error) {
+      setLoginError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível validar o login no backend do admin.',
+      )
+    } finally {
+      setIsSigningIn(false)
+    }
   }
 
   const siteHomeHref = getSiteHomeHref()
@@ -633,9 +677,14 @@ function AdminPage() {
               ) : null}
 
               <div className="flex flex-col gap-3">
-                <Button type="submit" size="lg" className="w-full">
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full"
+                  disabled={isSigningIn}
+                >
                   <LockKeyhole className="size-5" />
-                  Entrar no painel
+                  {isSigningIn ? 'Entrando...' : 'Entrar no painel'}
                 </Button>
                 <Button asChild variant="outline" size="lg" className="w-full">
                   <a href={siteHomeHref}>Voltar ao site</a>
