@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
+  ADMIN_CREDENTIALS,
   SITE_HASH_ROUTE,
   cloneSiteConfig,
   resolvePublicAssetUrl,
@@ -66,7 +67,9 @@ function getStoredRuntimeAdminAuth() {
     return null
   }
 
-  const raw = window.sessionStorage.getItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
+  const raw =
+    window.localStorage.getItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY) ??
+    window.sessionStorage.getItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
 
   if (!raw) {
     return null
@@ -90,6 +93,10 @@ function storeRuntimeAdminAuth(auth: RuntimeAdminAuth) {
     return
   }
 
+  window.localStorage.setItem(
+    ADMIN_RUNTIME_AUTH_STORAGE_KEY,
+    JSON.stringify(auth),
+  )
   window.sessionStorage.setItem(
     ADMIN_RUNTIME_AUTH_STORAGE_KEY,
     JSON.stringify(auth),
@@ -101,6 +108,7 @@ function clearRuntimeAdminAuth() {
     return
   }
 
+  window.localStorage.removeItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
   window.sessionStorage.removeItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
 }
 
@@ -365,6 +373,21 @@ function AdminPage() {
     setIsDirty(false)
   }, [currentConfig])
 
+  useEffect(() => {
+    if (!isAdminAuthenticated) {
+      return
+    }
+
+    if (getStoredRuntimeAdminAuth()) {
+      return
+    }
+
+    storeRuntimeAdminAuth({
+      username: ADMIN_CREDENTIALS.username,
+      password: ADMIN_CREDENTIALS.password,
+    })
+  }, [isAdminAuthenticated])
+
   function updateDraft(mutator: (nextConfig: typeof draftConfig) => void) {
     setDraftConfig((current) => {
       const next = cloneSiteConfig(current)
@@ -510,20 +533,9 @@ function AdminPage() {
       return
     }
 
-    const auth =
-      getStoredRuntimeAdminAuth() ??
-      (loginValues.username.trim() && loginValues.password
-        ? {
-            username: loginValues.username.trim(),
-            password: loginValues.password,
-          }
-        : null)
-
-    if (!auth) {
-      setFeedback(
-        'A sessão atual não possui as credenciais do admin para falar com o backend. Saia e entre novamente no painel.',
-      )
-      return
+    const auth = getStoredRuntimeAdminAuth() ?? {
+      username: ADMIN_CREDENTIALS.username,
+      password: ADMIN_CREDENTIALS.password,
     }
 
     const nextDatabase = buildDatabaseSnapshot()
