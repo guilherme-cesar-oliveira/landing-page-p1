@@ -682,142 +682,164 @@ function AdminPage() {
             title="Branding e SEO"
             description="Defina título, imagens, metadados e Open Graph sem expor opções mais técnicas no painel."
           >
-            <div className="admin-form-grid">
-              <FieldStack label="Título do site">
-                <Input
-                  value={draftConfig.branding.siteTitle}
-                  onChange={(event) =>
+            <div className="space-y-4">
+              <AccordionBlock
+                title="Identidade e links"
+                description="Nome do site, nome da marca e URL principal canônica."
+              >
+                <div className="admin-form-grid">
+                  <FieldStack label="Título do site">
+                    <Input
+                      value={draftConfig.branding.siteTitle}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.branding.siteTitle = event.target.value
+                          next.seo.title = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+
+                  <FieldStack label="Nome da marca">
+                    <Input
+                      value={draftConfig.branding.brandName}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.branding.brandName = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+
+                  <FieldStack label="Subtítulo da marca">
+                    <Input
+                      value={draftConfig.branding.brandSubtitle}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.branding.brandSubtitle = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+
+                  <FieldStack label="Canonical / URL principal">
+                    <Input
+                      value={draftConfig.seo.canonicalUrl}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.seo.canonicalUrl = event.target.value
+                        })
+                      }
+                      placeholder="https://seudominio.com/"
+                    />
+                  </FieldStack>
+                </div>
+              </AccordionBlock>
+
+              <AccordionBlock
+                title="Favicon"
+                description="Preview e substituição da imagem usada no ícone do site."
+              >
+                <ImageField
+                  label="Favicon"
+                  value={draftConfig.branding.faviconUrl}
+                  onChange={(value) =>
                     updateDraft((next) => {
-                      next.branding.siteTitle = event.target.value
-                      next.seo.title = event.target.value
+                      next.branding.faviconUrl = value
                     })
                   }
+                  onUploadClick={() => faviconInputRef.current?.click()}
+                  hint="Você pode usar caminho público, URL externa ou substituir com upload."
+                  alt="Preview do favicon"
+                  variant="icon"
                 />
-              </FieldStack>
+              </AccordionBlock>
 
-              <FieldStack label="Nome da marca">
-                <Input
-                  value={draftConfig.branding.brandName}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.branding.brandName = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
+              <AccordionBlock
+                title="Metadados principais"
+                description="Título, descrição e palavras-chave para busca."
+              >
+                <div className="space-y-6">
+                  <FieldStack label="Meta title">
+                    <Input
+                      value={draftConfig.seo.title}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.seo.title = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
 
-              <FieldStack label="Subtítulo da marca">
-                <Input
-                  value={draftConfig.branding.brandSubtitle}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.branding.brandSubtitle = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
+                  <FieldStack label="Meta description">
+                    <Textarea
+                      className="min-h-32"
+                      value={draftConfig.seo.description}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.seo.description = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
 
-              <FieldStack label="Canonical / URL principal">
-                <Input
-                  value={draftConfig.seo.canonicalUrl}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.canonicalUrl = event.target.value
-                    })
-                  }
-                  placeholder="https://seudominio.com/"
-                />
-              </FieldStack>
-            </div>
+                  <FieldStack label="Keywords">
+                    <Textarea
+                      className="min-h-28"
+                      value={draftConfig.seo.keywords}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.seo.keywords = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                </div>
+              </AccordionBlock>
 
-            <ImageField
-              label="Favicon"
-              value={draftConfig.branding.faviconUrl}
-              onChange={(value) =>
-                updateDraft((next) => {
-                  next.branding.faviconUrl = value
-                })
-              }
-              onUploadClick={() => faviconInputRef.current?.click()}
-              hint="Você pode usar caminho público, URL externa ou substituir com upload."
-              alt="Preview do favicon"
-              variant="icon"
-            />
+              <AccordionBlock
+                title="Open Graph"
+                description="Conteúdo exibido nos cards de compartilhamento."
+              >
+                <div className="space-y-6">
+                  <FieldStack label="Open Graph title">
+                    <Input
+                      value={draftConfig.seo.ogTitle}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.seo.ogTitle = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
 
-            <div className="space-y-6">
-              <FieldStack label="Meta title">
-                <Input
-                  value={draftConfig.seo.title}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.title = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
+                  <FieldStack label="Open Graph description">
+                    <Textarea
+                      className="min-h-32"
+                      value={draftConfig.seo.ogDescription}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.seo.ogDescription = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
 
-              <FieldStack label="Meta description">
-                <Textarea
-                  className="min-h-32"
-                  value={draftConfig.seo.description}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.description = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Keywords">
-                <Textarea
-                  className="min-h-28"
-                  value={draftConfig.seo.keywords}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.keywords = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-            </div>
-
-            <div className="space-y-6">
-              <FieldStack label="Open Graph title">
-                <Input
-                  value={draftConfig.seo.ogTitle}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.ogTitle = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Open Graph description">
-                <Textarea
-                  className="min-h-32"
-                  value={draftConfig.seo.ogDescription}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.seo.ogDescription = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <ImageField
-                label="Open Graph image"
-                value={draftConfig.seo.ogImage}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.seo.ogImage = value
-                  })
-                }
-                onUploadClick={() => ogImageInputRef.current?.click()}
-                hint="Essa imagem aparece em compartilhamentos e cards sociais."
-                alt="Preview da Open Graph image"
-                variant="wide"
-              />
+                  <ImageField
+                    label="Open Graph image"
+                    value={draftConfig.seo.ogImage}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.seo.ogImage = value
+                      })
+                    }
+                    onUploadClick={() => ogImageInputRef.current?.click()}
+                    hint="Essa imagem aparece em compartilhamentos e cards sociais."
+                    alt="Preview da Open Graph image"
+                    variant="wide"
+                  />
+                </div>
+              </AccordionBlock>
             </div>
           </AdminSection>
 
@@ -826,107 +848,130 @@ function AdminPage() {
             title="Cores do site"
             description="As variáveis abaixo controlam a identidade visual principal da landing e do botão de WhatsApp."
           >
-            <div className="admin-form-grid">
-              <ColorField
-                label="Background"
-                value={draftConfig.colors.background}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.background = value
-                    next.seo.themeColor = value
-                  })
-                }
-              />
-              <ColorField
-                label="Surface"
-                value={draftConfig.colors.surface}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.surface = value
-                  })
-                }
-              />
-              <ColorField
-                label="Surface strong"
-                value={draftConfig.colors.surfaceStrong}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.surfaceStrong = value
-                  })
-                }
-              />
-              <ColorField
-                label="Foreground"
-                value={draftConfig.colors.foreground}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.foreground = value
-                  })
-                }
-              />
-              <ColorField
-                label="Foreground muted"
-                value={draftConfig.colors.foregroundMuted}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.foregroundMuted = value
-                  })
-                }
-              />
-              <ColorField
-                label="Brand"
-                value={draftConfig.colors.brand}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.brand = value
-                  })
-                }
-              />
-              <ColorField
-                label="Brand foreground"
-                value={draftConfig.colors.brandForeground}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.brandForeground = value
-                  })
-                }
-              />
-              <ColorField
-                label="Border"
-                value={draftConfig.colors.border}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.border = value
-                  })
-                }
-              />
-              <ColorField
-                label="Ring"
-                value={draftConfig.colors.ring}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.ring = value
-                  })
-                }
-              />
-              <ColorField
-                label="WhatsApp"
-                value={draftConfig.colors.whatsapp}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.whatsapp = value
-                  })
-                }
-              />
-              <ColorField
-                label="WhatsApp foreground"
-                value={draftConfig.colors.whatsappForeground}
-                onChange={(value) =>
-                  updateDraft((next) => {
-                    next.colors.whatsappForeground = value
-                  })
-                }
-              />
+            <div className="space-y-4">
+              <AccordionBlock
+                title="Superfícies e estrutura"
+                description="Fundo, superfícies, bordas e cor-base do tema."
+              >
+                <div className="admin-form-grid">
+                  <ColorField
+                    label="Background"
+                    value={draftConfig.colors.background}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.background = value
+                        next.seo.themeColor = value
+                      })
+                    }
+                  />
+                  <ColorField
+                    label="Surface"
+                    value={draftConfig.colors.surface}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.surface = value
+                      })
+                    }
+                  />
+                  <ColorField
+                    label="Surface strong"
+                    value={draftConfig.colors.surfaceStrong}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.surfaceStrong = value
+                      })
+                    }
+                  />
+                  <ColorField
+                    label="Border"
+                    value={draftConfig.colors.border}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.border = value
+                      })
+                    }
+                  />
+                  <ColorField
+                    label="Ring"
+                    value={draftConfig.colors.ring}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.ring = value
+                      })
+                    }
+                  />
+                </div>
+              </AccordionBlock>
+
+              <AccordionBlock
+                title="Textos e marca"
+                description="Contraste dos textos e as cores principais da identidade."
+              >
+                <div className="admin-form-grid">
+                  <ColorField
+                    label="Foreground"
+                    value={draftConfig.colors.foreground}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.foreground = value
+                      })
+                    }
+                  />
+                  <ColorField
+                    label="Foreground muted"
+                    value={draftConfig.colors.foregroundMuted}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.foregroundMuted = value
+                      })
+                    }
+                  />
+                  <ColorField
+                    label="Brand"
+                    value={draftConfig.colors.brand}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.brand = value
+                      })
+                    }
+                  />
+                  <ColorField
+                    label="Brand foreground"
+                    value={draftConfig.colors.brandForeground}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.brandForeground = value
+                      })
+                    }
+                  />
+                </div>
+              </AccordionBlock>
+
+              <AccordionBlock
+                title="WhatsApp"
+                description="Cores dedicadas ao CTA e ao botão flutuante."
+              >
+                <div className="admin-form-grid">
+                  <ColorField
+                    label="WhatsApp"
+                    value={draftConfig.colors.whatsapp}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.whatsapp = value
+                      })
+                    }
+                  />
+                  <ColorField
+                    label="WhatsApp foreground"
+                    value={draftConfig.colors.whatsappForeground}
+                    onChange={(value) =>
+                      updateDraft((next) => {
+                        next.colors.whatsappForeground = value
+                      })
+                    }
+                  />
+                </div>
+              </AccordionBlock>
             </div>
           </AdminSection>
 
@@ -935,163 +980,184 @@ function AdminPage() {
             title="Cabeçalho, hero e painel lateral"
             description="Controle os textos principais do topo, CTAs e mensagens que ajudam na conversão."
           >
-            <div className="admin-form-grid">
-              <FieldStack label="CTA do header">
-                <Input
-                  value={draftConfig.header.ctaLabel}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.header.ctaLabel = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Eyebrow do hero">
-                <Input
-                  value={draftConfig.hero.eyebrow}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.hero.eyebrow = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-            </div>
-
-            <div className="admin-form-grid">
-              <FieldStack label="Hero linha 1">
-                <Input
-                  value={draftConfig.hero.titleLineOne}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.hero.titleLineOne = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Hero linha 2">
-                <Input
-                  value={draftConfig.hero.titleLineTwo}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.hero.titleLineTwo = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Hero destaque">
-                <Input
-                  value={draftConfig.hero.titleHighlight}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.hero.titleHighlight = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-            </div>
-
-            <FieldStack label="Descrição do hero">
-              <Textarea
-                className="min-h-32"
-                value={draftConfig.hero.description}
-                onChange={(event) =>
-                  updateDraft((next) => {
-                    next.hero.description = event.target.value
-                  })
-                }
-              />
-            </FieldStack>
-
-            <div className="admin-form-grid">
-              <FieldStack label="CTA primário">
-                <Input
-                  value={draftConfig.hero.primaryCtaLabel}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.hero.primaryCtaLabel = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="CTA secundário">
-                <Input
-                  value={draftConfig.hero.secondaryCtaLabel}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.hero.secondaryCtaLabel = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-            </div>
-
-            <div className="admin-form-grid">
-              <FieldStack label="Eyebrow do painel">
-                <Input
-                  value={draftConfig.sidePanel.eyebrow}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.sidePanel.eyebrow = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <FieldStack label="Valor de resposta">
-                <Input
-                  value={draftConfig.sidePanel.responseValue}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.sidePanel.responseValue = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-            </div>
-
-            <FieldStack label="Descrição do painel lateral">
-              <Textarea
-                className="min-h-32"
-                value={draftConfig.sidePanel.responseDescription}
-                onChange={(event) =>
-                  updateDraft((next) => {
-                    next.sidePanel.responseDescription = event.target.value
-                  })
-                }
-              />
-            </FieldStack>
-
-            <div className="admin-form-grid">
-              {draftConfig.sidePanel.tags.map((tag, index) => (
-                <FieldStack key={`${tag}-${index}`} label={`Tag ${index + 1}`}>
+            <div className="space-y-4">
+              <AccordionBlock
+                title="Header"
+                description="Rótulo principal do CTA do topo."
+              >
+                <FieldStack label="CTA do header">
                   <Input
-                    value={tag}
+                    value={draftConfig.header.ctaLabel}
                     onChange={(event) =>
                       updateDraft((next) => {
-                        next.sidePanel.tags[index] = event.target.value
+                        next.header.ctaLabel = event.target.value
                       })
                     }
                   />
                 </FieldStack>
-              ))}
-            </div>
+              </AccordionBlock>
 
-            <FieldStack label="Nota inferior do painel">
-              <Textarea
-                className="min-h-32"
-                value={draftConfig.sidePanel.footerNote}
-                onChange={(event) =>
-                  updateDraft((next) => {
-                    next.sidePanel.footerNote = event.target.value
-                  })
-                }
-              />
-            </FieldStack>
+              <AccordionBlock
+                title="Hero"
+                description="Eyebrow, título quebrado, descrição e CTAs principais."
+              >
+                <div className="space-y-6">
+                  <div className="admin-form-grid">
+                    <FieldStack label="Eyebrow do hero">
+                      <Input
+                        value={draftConfig.hero.eyebrow}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.hero.eyebrow = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                  </div>
+
+                  <div className="admin-form-grid">
+                    <FieldStack label="Hero linha 1">
+                      <Input
+                        value={draftConfig.hero.titleLineOne}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.hero.titleLineOne = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+
+                    <FieldStack label="Hero linha 2">
+                      <Input
+                        value={draftConfig.hero.titleLineTwo}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.hero.titleLineTwo = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+
+                    <FieldStack label="Hero destaque">
+                      <Input
+                        value={draftConfig.hero.titleHighlight}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.hero.titleHighlight = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                  </div>
+
+                  <FieldStack label="Descrição do hero">
+                    <Textarea
+                      className="min-h-32"
+                      value={draftConfig.hero.description}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.hero.description = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+
+                  <div className="admin-form-grid">
+                    <FieldStack label="CTA primário">
+                      <Input
+                        value={draftConfig.hero.primaryCtaLabel}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.hero.primaryCtaLabel = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+
+                    <FieldStack label="CTA secundário">
+                      <Input
+                        value={draftConfig.hero.secondaryCtaLabel}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.hero.secondaryCtaLabel = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                  </div>
+                </div>
+              </AccordionBlock>
+
+              <AccordionBlock
+                title="Painel lateral"
+                description="Resposta rápida, tags e nota inferior do bloco lateral."
+              >
+                <div className="space-y-6">
+                  <div className="admin-form-grid">
+                    <FieldStack label="Eyebrow do painel">
+                      <Input
+                        value={draftConfig.sidePanel.eyebrow}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.sidePanel.eyebrow = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+
+                    <FieldStack label="Valor de resposta">
+                      <Input
+                        value={draftConfig.sidePanel.responseValue}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.sidePanel.responseValue = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                  </div>
+
+                  <FieldStack label="Descrição do painel lateral">
+                    <Textarea
+                      className="min-h-32"
+                      value={draftConfig.sidePanel.responseDescription}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.sidePanel.responseDescription = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+
+                  <div className="admin-form-grid">
+                    {draftConfig.sidePanel.tags.map((tag, index) => (
+                      <FieldStack key={`${tag}-${index}`} label={`Tag ${index + 1}`}>
+                        <Input
+                          value={tag}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.sidePanel.tags[index] = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                    ))}
+                  </div>
+
+                  <FieldStack label="Nota inferior do painel">
+                    <Textarea
+                      className="min-h-32"
+                      value={draftConfig.sidePanel.footerNote}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.sidePanel.footerNote = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                </div>
+              </AccordionBlock>
+            </div>
           </AdminSection>
 
           <AdminSection
@@ -1099,201 +1165,229 @@ function AdminPage() {
             title="Métricas, serviços e processo"
             description="Edite a faixa numérica, os blocos de serviços e o passo a passo exibido na landing."
           >
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Métricas</h3>
-              <div className="admin-form-grid">
-                {draftConfig.metrics.map((metric, index) => (
-                  <div
-                    key={`${metric.label}-${index}`}
-                    className="rounded-[8px] border border-brand/14 bg-black/25 p-4 space-y-4"
-                  >
-                    <FieldStack label={`Métrica ${index + 1} · valor`}>
+            <div className="space-y-4">
+              <AccordionBlock
+                title="Métricas"
+                description="Faixa numérica de destaque logo após o hero."
+              >
+                <div className="space-y-4">
+                  {draftConfig.metrics.map((metric, index) => (
+                    <AccordionBlock
+                      key={`${metric.label}-${index}`}
+                      title={`Métrica ${index + 1}`}
+                      description={`${metric.value} · ${metric.label}`}
+                    >
+                      <div className="admin-form-grid">
+                        <FieldStack label={`Métrica ${index + 1} · valor`}>
+                          <Input
+                            value={metric.value}
+                            onChange={(event) =>
+                              updateDraft((next) => {
+                                next.metrics[index].value = event.target.value
+                              })
+                            }
+                          />
+                        </FieldStack>
+                        <FieldStack label={`Métrica ${index + 1} · rótulo`}>
+                          <Input
+                            value={metric.label}
+                            onChange={(event) =>
+                              updateDraft((next) => {
+                                next.metrics[index].label = event.target.value
+                              })
+                            }
+                          />
+                        </FieldStack>
+                      </div>
+                    </AccordionBlock>
+                  ))}
+                </div>
+              </AccordionBlock>
+
+              <AccordionBlock
+                title="Seção de serviços"
+                description="Eyebrow, título e descrição do bloco de serviços."
+              >
+                <div className="space-y-6">
+                  <div className="admin-form-grid">
+                    <FieldStack label="Eyebrow">
                       <Input
-                        value={metric.value}
+                        value={draftConfig.servicesSection.eyebrow}
                         onChange={(event) =>
                           updateDraft((next) => {
-                            next.metrics[index].value = event.target.value
+                            next.servicesSection.eyebrow = event.target.value
                           })
                         }
                       />
                     </FieldStack>
-                    <FieldStack label={`Métrica ${index + 1} · rótulo`}>
+                    <FieldStack label="Título">
                       <Input
-                        value={metric.label}
+                        value={draftConfig.servicesSection.title}
                         onChange={(event) =>
                           updateDraft((next) => {
-                            next.metrics[index].label = event.target.value
+                            next.servicesSection.title = event.target.value
                           })
                         }
                       />
                     </FieldStack>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <FieldStack label="Descrição">
+                    <Textarea
+                      className="min-h-28"
+                      value={draftConfig.servicesSection.description}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.servicesSection.description = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                </div>
+              </AccordionBlock>
 
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Seção de serviços</h3>
-              <div className="admin-form-grid">
-                <FieldStack label="Eyebrow">
-                  <Input
-                    value={draftConfig.servicesSection.eyebrow}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.servicesSection.eyebrow = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Título">
-                  <Input
-                    value={draftConfig.servicesSection.title}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.servicesSection.title = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-              </div>
-              <FieldStack label="Descrição">
-                <Textarea
-                  className="min-h-28"
-                  value={draftConfig.servicesSection.description}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.servicesSection.description = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-            </div>
+              <AccordionBlock
+                title="Cards de serviço"
+                description="Lista numerada com os títulos e descrições de cada serviço."
+              >
+                <div className="space-y-4">
+                  {draftConfig.services.map((service, index) => (
+                    <AccordionBlock
+                      key={`${service.number}-${index}`}
+                      title={`${service.number} · ${service.title}`}
+                      description={service.description}
+                    >
+                      <div className="space-y-4">
+                        <div className="admin-form-grid">
+                          <FieldStack label="Número">
+                            <Input
+                              value={service.number}
+                              onChange={(event) =>
+                                updateDraft((next) => {
+                                  next.services[index].number = event.target.value
+                                })
+                              }
+                            />
+                          </FieldStack>
+                          <FieldStack label="Título">
+                            <Input
+                              value={service.title}
+                              onChange={(event) =>
+                                updateDraft((next) => {
+                                  next.services[index].title = event.target.value
+                                })
+                              }
+                            />
+                          </FieldStack>
+                        </div>
+                        <FieldStack label="Descrição">
+                          <Textarea
+                            className="min-h-28"
+                            value={service.description}
+                            onChange={(event) =>
+                              updateDraft((next) => {
+                                next.services[index].description = event.target.value
+                              })
+                            }
+                          />
+                        </FieldStack>
+                      </div>
+                    </AccordionBlock>
+                  ))}
+                </div>
+              </AccordionBlock>
 
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Cards de serviço</h3>
-              <div className="space-y-4">
-                {draftConfig.services.map((service, index) => (
-                  <div
-                    key={`${service.number}-${index}`}
-                    className="rounded-[8px] border border-brand/14 bg-black/25 p-4 space-y-4"
-                  >
-                    <div className="admin-form-grid">
-                      <FieldStack label="Número">
-                        <Input
-                          value={service.number}
-                          onChange={(event) =>
-                            updateDraft((next) => {
-                              next.services[index].number = event.target.value
-                            })
-                          }
-                        />
-                      </FieldStack>
-                      <FieldStack label="Título">
-                        <Input
-                          value={service.title}
-                          onChange={(event) =>
-                            updateDraft((next) => {
-                              next.services[index].title = event.target.value
-                            })
-                          }
-                        />
-                      </FieldStack>
-                    </div>
-                    <FieldStack label="Descrição">
-                      <Textarea
-                        className="min-h-28"
-                        value={service.description}
+              <AccordionBlock
+                title="Seção de processo"
+                description="Texto introdutório do passo a passo da landing."
+              >
+                <div className="space-y-6">
+                  <div className="admin-form-grid">
+                    <FieldStack label="Eyebrow">
+                      <Input
+                        value={draftConfig.processSection.eyebrow}
                         onChange={(event) =>
                           updateDraft((next) => {
-                            next.services[index].description = event.target.value
+                            next.processSection.eyebrow = event.target.value
+                          })
+                        }
+                      />
+                    </FieldStack>
+                    <FieldStack label="Título">
+                      <Input
+                        value={draftConfig.processSection.title}
+                        onChange={(event) =>
+                          updateDraft((next) => {
+                            next.processSection.title = event.target.value
                           })
                         }
                       />
                     </FieldStack>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <FieldStack label="Descrição">
+                    <Textarea
+                      className="min-h-28"
+                      value={draftConfig.processSection.description}
+                      onChange={(event) =>
+                        updateDraft((next) => {
+                          next.processSection.description = event.target.value
+                        })
+                      }
+                    />
+                  </FieldStack>
+                </div>
+              </AccordionBlock>
 
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Seção de processo</h3>
-              <div className="admin-form-grid">
-                <FieldStack label="Eyebrow">
-                  <Input
-                    value={draftConfig.processSection.eyebrow}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.processSection.eyebrow = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-                <FieldStack label="Título">
-                  <Input
-                    value={draftConfig.processSection.title}
-                    onChange={(event) =>
-                      updateDraft((next) => {
-                        next.processSection.title = event.target.value
-                      })
-                    }
-                  />
-                </FieldStack>
-              </div>
-              <FieldStack label="Descrição">
-                <Textarea
-                  className="min-h-28"
-                  value={draftConfig.processSection.description}
-                  onChange={(event) =>
-                    updateDraft((next) => {
-                      next.processSection.description = event.target.value
-                    })
-                  }
-                />
-              </FieldStack>
-
-              <div className="space-y-4">
-                {draftConfig.processSteps.map((step, index) => (
-                  <div
-                    key={`${step.number}-${index}`}
-                    className="rounded-[8px] border border-brand/14 bg-black/25 p-4 space-y-4"
-                  >
-                    <div className="admin-form-grid">
-                      <FieldStack label="Número">
-                        <Input
-                          value={step.number}
-                          onChange={(event) =>
-                            updateDraft((next) => {
-                              next.processSteps[index].number = event.target.value
-                            })
-                          }
-                        />
-                      </FieldStack>
-                      <FieldStack label="Título">
-                        <Input
-                          value={step.title}
-                          onChange={(event) =>
-                            updateDraft((next) => {
-                              next.processSteps[index].title = event.target.value
-                            })
-                          }
-                        />
-                      </FieldStack>
-                    </div>
-                    <FieldStack label="Descrição">
-                      <Textarea
-                        className="min-h-28"
-                        value={step.description}
-                        onChange={(event) =>
-                          updateDraft((next) => {
-                            next.processSteps[index].description =
-                              event.target.value
-                          })
-                        }
-                      />
-                    </FieldStack>
-                  </div>
-                ))}
-              </div>
+              <AccordionBlock
+                title="Passos do processo"
+                description="Blocos numerados do fluxo de atendimento."
+              >
+                <div className="space-y-4">
+                  {draftConfig.processSteps.map((step, index) => (
+                    <AccordionBlock
+                      key={`${step.number}-${index}`}
+                      title={`${step.number} · ${step.title}`}
+                      description={step.description}
+                    >
+                      <div className="space-y-4">
+                        <div className="admin-form-grid">
+                          <FieldStack label="Número">
+                            <Input
+                              value={step.number}
+                              onChange={(event) =>
+                                updateDraft((next) => {
+                                  next.processSteps[index].number = event.target.value
+                                })
+                              }
+                            />
+                          </FieldStack>
+                          <FieldStack label="Título">
+                            <Input
+                              value={step.title}
+                              onChange={(event) =>
+                                updateDraft((next) => {
+                                  next.processSteps[index].title = event.target.value
+                                })
+                              }
+                            />
+                          </FieldStack>
+                        </div>
+                        <FieldStack label="Descrição">
+                          <Textarea
+                            className="min-h-28"
+                            value={step.description}
+                            onChange={(event) =>
+                              updateDraft((next) => {
+                                next.processSteps[index].description =
+                                  event.target.value
+                              })
+                            }
+                          />
+                        </FieldStack>
+                      </div>
+                    </AccordionBlock>
+                  ))}
+                </div>
+              </AccordionBlock>
             </div>
           </AdminSection>
 
@@ -1419,187 +1513,200 @@ function AdminPage() {
                 title="Campos do formulário"
                 description="Labels, placeholders, opções do select e mensagens de validação."
               >
-                <div className="admin-form-grid">
-                  <FieldStack label="Label nome">
-                    <Input
-                      value={draftConfig.form.nameLabel}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.nameLabel = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Placeholder nome">
-                    <Input
-                      value={draftConfig.form.namePlaceholder}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.namePlaceholder = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Label telefone">
-                    <Input
-                      value={draftConfig.form.phoneLabel}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.phoneLabel = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Placeholder telefone">
-                    <Input
-                      value={draftConfig.form.phonePlaceholder}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.phonePlaceholder = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Label serviço">
-                    <Input
-                      value={draftConfig.form.serviceLabel}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.serviceLabel = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Placeholder serviço">
-                    <Input
-                      value={draftConfig.form.servicePlaceholder}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.servicePlaceholder = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Label bairro / cidade">
-                    <Input
-                      value={draftConfig.form.locationLabel}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.locationLabel = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Placeholder bairro / cidade">
-                    <Input
-                      value={draftConfig.form.locationPlaceholder}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.locationPlaceholder = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Label detalhes">
-                    <Input
-                      value={draftConfig.form.detailsLabel}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.detailsLabel = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                  <FieldStack label="Placeholder detalhes">
-                    <Input
-                      value={draftConfig.form.detailsPlaceholder}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.form.detailsPlaceholder = event.target.value
-                        })
-                      }
-                    />
-                  </FieldStack>
-                </div>
-
                 <div className="space-y-4">
-                  <h4 className="admin-subtitle">Opções do select de serviço</h4>
-                  <div className="admin-form-grid">
-                    {draftConfig.form.serviceOptions.map((option, index) => (
-                      <FieldStack key={`${option}-${index}`} label={`Opção ${index + 1}`}>
+                  <AccordionBlock
+                    title="Estrutura do formulário"
+                    description="Labels e placeholders dos campos principais."
+                  >
+                    <div className="admin-form-grid">
+                      <FieldStack label="Label nome">
                         <Input
-                          value={option}
+                          value={draftConfig.form.nameLabel}
                           onChange={(event) =>
                             updateDraft((next) => {
-                              next.form.serviceOptions[index] = event.target.value
+                              next.form.nameLabel = event.target.value
                             })
                           }
                         />
                       </FieldStack>
-                    ))}
-                  </div>
-                </div>
+                      <FieldStack label="Placeholder nome">
+                        <Input
+                          value={draftConfig.form.namePlaceholder}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.namePlaceholder = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Label telefone">
+                        <Input
+                          value={draftConfig.form.phoneLabel}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.phoneLabel = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Placeholder telefone">
+                        <Input
+                          value={draftConfig.form.phonePlaceholder}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.phonePlaceholder = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Label serviço">
+                        <Input
+                          value={draftConfig.form.serviceLabel}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.serviceLabel = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Placeholder serviço">
+                        <Input
+                          value={draftConfig.form.servicePlaceholder}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.servicePlaceholder = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Label bairro / cidade">
+                        <Input
+                          value={draftConfig.form.locationLabel}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.locationLabel = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Placeholder bairro / cidade">
+                        <Input
+                          value={draftConfig.form.locationPlaceholder}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.locationPlaceholder = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Label detalhes">
+                        <Input
+                          value={draftConfig.form.detailsLabel}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.detailsLabel = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Placeholder detalhes">
+                        <Input
+                          value={draftConfig.form.detailsPlaceholder}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.detailsPlaceholder = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                    </div>
+                  </AccordionBlock>
 
-                <div className="space-y-4">
-                  <h4 className="admin-subtitle">Mensagens de validação</h4>
-                  <div className="admin-form-grid">
-                    <FieldStack label="Nome obrigatório">
-                      <Input
-                        value={draftConfig.form.validationNameRequired}
-                        onChange={(event) =>
-                          updateDraft((next) => {
-                            next.form.validationNameRequired = event.target.value
-                          })
-                        }
-                      />
-                    </FieldStack>
-                    <FieldStack label="Telefone obrigatório">
-                      <Input
-                        value={draftConfig.form.validationPhoneRequired}
-                        onChange={(event) =>
-                          updateDraft((next) => {
-                            next.form.validationPhoneRequired = event.target.value
-                          })
-                        }
-                      />
-                    </FieldStack>
-                    <FieldStack label="Serviço obrigatório">
-                      <Input
-                        value={draftConfig.form.validationServiceRequired}
-                        onChange={(event) =>
-                          updateDraft((next) => {
-                            next.form.validationServiceRequired = event.target.value
-                          })
-                        }
-                      />
-                    </FieldStack>
-                    <FieldStack label="Detalhes obrigatórios">
-                      <Input
-                        value={draftConfig.form.validationDetailsRequired}
-                        onChange={(event) =>
-                          updateDraft((next) => {
-                            next.form.validationDetailsRequired = event.target.value
-                          })
-                        }
-                      />
-                    </FieldStack>
-                    <FieldStack label="Fallback da localização">
-                      <Input
-                        value={draftConfig.form.locationNotProvidedLabel}
-                        onChange={(event) =>
-                          updateDraft((next) => {
-                            next.form.locationNotProvidedLabel = event.target.value
-                          })
-                        }
-                      />
-                    </FieldStack>
-                  </div>
+                  <AccordionBlock
+                    title="Opções do select de serviço"
+                    description="Itens exibidos no select do formulário."
+                  >
+                    <div className="admin-form-grid">
+                      {draftConfig.form.serviceOptions.map((option, index) => (
+                        <FieldStack key={`${option}-${index}`} label={`Opção ${index + 1}`}>
+                          <Input
+                            value={option}
+                            onChange={(event) =>
+                              updateDraft((next) => {
+                                next.form.serviceOptions[index] = event.target.value
+                              })
+                            }
+                          />
+                        </FieldStack>
+                      ))}
+                    </div>
+                  </AccordionBlock>
+
+                  <AccordionBlock
+                    title="Mensagens de validação"
+                    description="Mensagens de erro e fallback usadas no formulário."
+                  >
+                    <div className="admin-form-grid">
+                      <FieldStack label="Nome obrigatório">
+                        <Input
+                          value={draftConfig.form.validationNameRequired}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.validationNameRequired = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Telefone obrigatório">
+                        <Input
+                          value={draftConfig.form.validationPhoneRequired}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.validationPhoneRequired = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Serviço obrigatório">
+                        <Input
+                          value={draftConfig.form.validationServiceRequired}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.validationServiceRequired = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Detalhes obrigatórios">
+                        <Input
+                          value={draftConfig.form.validationDetailsRequired}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.validationDetailsRequired = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                      <FieldStack label="Fallback da localização">
+                        <Input
+                          value={draftConfig.form.locationNotProvidedLabel}
+                          onChange={(event) =>
+                            updateDraft((next) => {
+                              next.form.locationNotProvidedLabel = event.target.value
+                            })
+                          }
+                        />
+                      </FieldStack>
+                    </div>
+                  </AccordionBlock>
                 </div>
               </AccordionBlock>
             </div>
 
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Footer</h3>
+            <AccordionBlock
+              title="Footer"
+              description="Prefixo do WhatsApp e texto legal do rodapé."
+            >
               <div className="admin-form-grid">
                 <FieldStack label="Prefixo do WhatsApp">
                   <Input
@@ -1622,10 +1729,12 @@ function AdminPage() {
                   />
                 </FieldStack>
               </div>
-            </div>
+            </AccordionBlock>
 
-            <div className="space-y-6">
-              <h3 className="admin-subtitle">Snippets</h3>
+            <AccordionBlock
+              title="Snippets"
+              description="Códigos extras para head e body, como GTM e pixels."
+            >
               <FieldStack
                 label="Head snippet"
                 hint="Use para Google Tag Manager, pixels ou metas customizadas no head."
@@ -1656,7 +1765,7 @@ function AdminPage() {
                   placeholder="<noscript>...</noscript>"
                 />
               </FieldStack>
-            </div>
+            </AccordionBlock>
           </AdminSection>
 
           <div className="sticky bottom-4 z-20">
