@@ -7,7 +7,6 @@ import {
   useState,
 } from 'react'
 import {
-  Check,
   ChevronDown,
   Download,
   FileJson,
@@ -18,7 +17,6 @@ import {
   Palette,
   Save,
   Settings2,
-  Trash2,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -64,6 +62,29 @@ function getStoredGithubToken() {
   return window.localStorage.getItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY) ?? ''
 }
 
+function seedGithubTokenFromHash() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const [hashPath, hashQuery = ''] = window.location.hash.split('?')
+  const params = new URLSearchParams(hashQuery)
+  const token = params.get('admin_token')?.trim()
+
+  if (hashPath !== '#/admin' || !token) {
+    return null
+  }
+
+  window.localStorage.setItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY, token)
+  window.history.replaceState(
+    null,
+    '',
+    `${window.location.pathname}${window.location.search}#/admin`,
+  )
+
+  return token
+}
+
 function getSiteHomeHref() {
   if (typeof window === 'undefined') {
     return SITE_HASH_ROUTE
@@ -81,22 +102,40 @@ function AdminSection({
   title,
   description,
   children,
+  defaultOpen = false,
 }: {
   icon: ReactNode
   title: string
   description: string
   children: ReactNode
+  defaultOpen?: boolean
 }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
   return (
-    <section className="admin-card space-y-6">
-      <div className="flex items-start gap-4">
-        <div className="admin-icon">{icon}</div>
-        <div className="space-y-2">
-          <h2 className="admin-section-title">{title}</h2>
-          <p className="admin-section-copy">{description}</p>
+    <section className="admin-card">
+      <button
+        type="button"
+        className="flex w-full items-start justify-between gap-4 text-left"
+        onClick={() => setIsOpen((current) => !current)}
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-start gap-4">
+          <div className="admin-icon">{icon}</div>
+          <div className="space-y-2">
+            <h2 className="admin-section-title">{title}</h2>
+            <p className="admin-section-copy">{description}</p>
+          </div>
         </div>
-      </div>
-      {children}
+
+        <ChevronDown
+          className={`mt-1 size-6 shrink-0 text-brand transition-transform duration-300 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {isOpen ? <div className="mt-6 space-y-6">{children}</div> : null}
     </section>
   )
 }
@@ -279,8 +318,6 @@ function AdminPage() {
   const [loginError, setLoginError] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
   const [githubToken, setGithubToken] = useState(() => getStoredGithubToken())
-  const [tokenInputValue, setTokenInputValue] = useState('')
-  const [isEditingToken, setIsEditingToken] = useState(() => !getStoredGithubToken())
   const [loginValues, setLoginValues] = useState({
     username: '',
     password: '',
@@ -294,6 +331,19 @@ function AdminPage() {
     setIsDirty(false)
   }, [currentConfig])
 
+  useEffect(() => {
+    const seededToken = seedGithubTokenFromHash()
+
+    if (!seededToken) {
+      return
+    }
+
+    setGithubToken(seededToken)
+    setFeedback(
+      'Publicação automática configurada neste navegador com a chave privada do painel.',
+    )
+  }, [])
+
   function updateDraft(mutator: (nextConfig: typeof draftConfig) => void) {
     setDraftConfig((current) => {
       const next = cloneSiteConfig(current)
@@ -306,43 +356,6 @@ function AdminPage() {
 
   function buildDatabaseSnapshot() {
     return syncDatabaseWithCurrentConfig(database, draftConfig)
-  }
-
-  function persistGithubToken(token: string) {
-    window.localStorage.setItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY, token)
-    setGithubToken(token)
-  }
-
-  function clearGithubToken() {
-    window.localStorage.removeItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY)
-    setGithubToken('')
-  }
-
-  function handleSaveToken() {
-    const nextToken = tokenInputValue.trim()
-
-    if (!nextToken) {
-      setFeedback(
-        'Informe um token do GitHub para habilitar o salvar e publicar.',
-      )
-      return
-    }
-
-    persistGithubToken(nextToken)
-    setTokenInputValue('')
-    setIsEditingToken(false)
-    setFeedback(
-      'Token salvo neste navegador. O botão Salvar e publicar já atualiza o JSON compartilhado do site.',
-    )
-  }
-
-  function handleRemoveToken() {
-    clearGithubToken()
-    setTokenInputValue('')
-    setIsEditingToken(true)
-    setFeedback(
-      'Token removido deste navegador. Configure outro token para voltar a publicar automaticamente.',
-    )
   }
 
   function handleDiscard() {
@@ -468,9 +481,8 @@ function AdminPage() {
 
     if (!token) {
       setFeedback(
-        'Configure um token do GitHub neste navegador para usar o salvar e publicar.',
+        'A publicação automática não está configurada neste navegador. Por segurança, o token não fica exposto na interface nem no código público.',
       )
-      setIsEditingToken(true)
       return
     }
 
@@ -513,7 +525,6 @@ function AdminPage() {
   }
 
   const siteHomeHref = getSiteHomeHref()
-  const hasGithubToken = githubToken.trim().length > 0
 
   if (!isAdminAuthenticated) {
     return (
@@ -638,85 +649,6 @@ function AdminPage() {
 
           <div className="rounded-[8px] border border-brand/20 bg-black/30 px-4 py-4 text-sm leading-relaxed text-foreground-muted">
             URL atual: <span className="text-foreground">{publishedUrl}</span>
-          </div>
-
-          <div className="rounded-[10px] border border-brand/20 bg-black/30 px-4 py-4">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-2">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand">
-                  Token GitHub
-                </p>
-                <p className="admin-field-hint">
-                  {hasGithubToken
-                    ? 'Token configurado neste navegador. Salvar e publicar já atualiza automaticamente o repositório.'
-                    : 'Configure um token com permissão de escrita neste repositório para habilitar a publicação automática.'}
-                </p>
-              </div>
-
-              {hasGithubToken ? (
-                <span className="admin-token-chip">
-                  <Check className="size-4" />
-                  Configurado
-                </span>
-              ) : null}
-            </div>
-
-            <div className="mt-4 space-y-4">
-              {isEditingToken ? (
-                <>
-                  <FieldStack
-                    label="Token pessoal"
-                    hint="O token fica salvo apenas no localStorage deste navegador."
-                  >
-                    <Input
-                      type="password"
-                      value={tokenInputValue}
-                      onChange={(event) => setTokenInputValue(event.target.value)}
-                      placeholder="ghp_... ou github_pat_..."
-                    />
-                  </FieldStack>
-
-                  <div className="admin-inline-grid">
-                    <Button type="button" onClick={handleSaveToken}>
-                      Salvar token
-                    </Button>
-                    {hasGithubToken ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setIsEditingToken(false)
-                          setTokenInputValue('')
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                    ) : null}
-                  </div>
-                </>
-              ) : (
-                <div className="admin-inline-grid">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsEditingToken(true)
-                      setTokenInputValue(githubToken)
-                    }}
-                  >
-                    Trocar token
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleRemoveToken}
-                  >
-                    <Trash2 className="size-5" />
-                    Remover token
-                  </Button>
-                </div>
-              )}
-            </div>
           </div>
         </section>
 
