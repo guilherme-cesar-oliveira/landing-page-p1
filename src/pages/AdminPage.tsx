@@ -24,7 +24,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  ADMIN_GITHUB_TOKEN_STORAGE_KEY,
   GITHUB_PUBLISH_TARGET,
   SITE_HASH_ROUTE,
   cloneSiteConfig,
@@ -54,35 +53,17 @@ function readFileAsDataUrl(file: File) {
   })
 }
 
-function getStoredGithubToken() {
-  if (typeof window === 'undefined') {
+function getEmbeddedGithubToken() {
+  if (typeof document === 'undefined') {
     return ''
   }
 
-  return window.localStorage.getItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY) ?? ''
-}
-
-function seedGithubTokenFromHash() {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  const [hashPath, hashQuery = ''] = window.location.hash.split('?')
-  const params = new URLSearchParams(hashQuery)
-  const token = params.get('admin_token')?.trim()
-
-  if (hashPath !== '#/admin' || !token) {
-    return null
-  }
-
-  window.localStorage.setItem(ADMIN_GITHUB_TOKEN_STORAGE_KEY, token)
-  window.history.replaceState(
-    null,
-    '',
-    `${window.location.pathname}${window.location.search}#/admin`,
+  return (
+    document
+      .querySelector('meta[name="landing-admin-github-token"]')
+      ?.getAttribute('content')
+      ?.trim() ?? ''
   )
-
-  return token
 }
 
 function getSiteHomeHref() {
@@ -317,7 +298,6 @@ function AdminPage() {
   const [feedback, setFeedback] = useState('')
   const [loginError, setLoginError] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
-  const [githubToken, setGithubToken] = useState(() => getStoredGithubToken())
   const [loginValues, setLoginValues] = useState({
     username: '',
     password: '',
@@ -330,19 +310,6 @@ function AdminPage() {
     setDraftConfig(cloneSiteConfig(currentConfig))
     setIsDirty(false)
   }, [currentConfig])
-
-  useEffect(() => {
-    const seededToken = seedGithubTokenFromHash()
-
-    if (!seededToken) {
-      return
-    }
-
-    setGithubToken(seededToken)
-    setFeedback(
-      'Publicação automática configurada neste navegador com a chave privada do painel.',
-    )
-  }, [])
 
   function updateDraft(mutator: (nextConfig: typeof draftConfig) => void) {
     setDraftConfig((current) => {
@@ -477,11 +444,11 @@ function AdminPage() {
   }
 
   async function handleSaveAndPublish() {
-    const token = githubToken.trim()
+    const token = getEmbeddedGithubToken()
 
     if (!token) {
       setFeedback(
-        'A publicação automática não está configurada neste navegador. Por segurança, o token não fica exposto na interface nem no código público.',
+        'A chave de publicação embutida no HTML do admin não foi encontrada. Verifique a configuração do app antes de publicar.',
       )
       return
     }
@@ -685,7 +652,7 @@ function AdminPage() {
             <div className="space-y-4">
               <AccordionBlock
                 title="Identidade e links"
-                description="Nome do site, nome da marca e URL principal canônica."
+                description="Nome do site e os textos principais da marca."
               >
                 <div className="admin-form-grid">
                   <FieldStack label="Título do site">
@@ -719,18 +686,6 @@ function AdminPage() {
                           next.branding.brandSubtitle = event.target.value
                         })
                       }
-                    />
-                  </FieldStack>
-
-                  <FieldStack label="Canonical / URL principal">
-                    <Input
-                      value={draftConfig.seo.canonicalUrl}
-                      onChange={(event) =>
-                        updateDraft((next) => {
-                          next.seo.canonicalUrl = event.target.value
-                        })
-                      }
-                      placeholder="https://seudominio.com/"
                     />
                   </FieldStack>
                 </div>

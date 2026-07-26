@@ -3,10 +3,6 @@ export const SITE_HASH_ROUTE = '#/'
 export const SITE_DATABASE_URL = 'site-admin-db.json'
 export const SITE_DATABASE_STORAGE_KEY = 'landing-page.site-database.v1'
 export const ADMIN_SESSION_STORAGE_KEY = 'landing-page.admin-session.v1'
-export const ADMIN_PUBLISH_SETTINGS_STORAGE_KEY =
-  'landing-page.admin-publish-settings.v1'
-export const ADMIN_GITHUB_TOKEN_STORAGE_KEY =
-  'landing-page.admin-github-token.v1'
 
 export const GITHUB_PUBLISH_TARGET = {
   owner: 'guilherme-cesar-oliveira',
