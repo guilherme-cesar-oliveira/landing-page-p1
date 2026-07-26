@@ -24,7 +24,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  GITHUB_PUBLISH_TARGET,
   SITE_HASH_ROUTE,
   cloneSiteConfig,
   resolvePublicAssetUrl,
@@ -33,15 +32,11 @@ import {
 } from '@/lib/site-config'
 import { useSiteConfig } from '@/lib/use-site-config'
 
-function encodeBase64Unicode(value: string) {
-  const bytes = new TextEncoder().encode(value)
-  let binary = ''
+const ADMIN_RUNTIME_AUTH_STORAGE_KEY = 'landing-page.admin-runtime-auth.v1'
 
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte)
-  })
-
-  return btoa(binary)
+type RuntimeAdminAuth = {
+  username: string
+  password: string
 }
 
 function readFileAsDataUrl(file: File) {
@@ -53,17 +48,76 @@ function readFileAsDataUrl(file: File) {
   })
 }
 
-function getEmbeddedGithubToken() {
+function getEmbeddedPublishEndpoint() {
   if (typeof document === 'undefined') {
     return ''
   }
 
   return (
     document
-      .querySelector('meta[name="landing-admin-github-token"]')
+      .querySelector('meta[name="landing-admin-publish-endpoint"]')
       ?.getAttribute('content')
       ?.trim() ?? ''
   )
+}
+
+function getStoredRuntimeAdminAuth() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const raw = window.sessionStorage.getItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
+
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as RuntimeAdminAuth
+
+    if (!parsed.username || !parsed.password) {
+      return null
+    }
+
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function storeRuntimeAdminAuth(auth: RuntimeAdminAuth) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.sessionStorage.setItem(
+    ADMIN_RUNTIME_AUTH_STORAGE_KEY,
+    JSON.stringify(auth),
+  )
+}
+
+function clearRuntimeAdminAuth() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.sessionStorage.removeItem(ADMIN_RUNTIME_AUTH_STORAGE_KEY)
+}
+
+function resolveWorkerPublishUrl(endpoint: string) {
+  const url = new URL(endpoint)
+
+  if (url.pathname.endsWith('/publish')) {
+    return url.toString()
+  }
+
+  if (url.pathname.endsWith('/')) {
+    url.pathname = `${url.pathname}publish`
+    return url.toString()
+  }
+
+  url.pathname = `${url.pathname}/publish`
+  return url.toString()
 }
 
 function getSiteHomeHref() {
@@ -397,58 +451,77 @@ function AdminPage() {
     )
   }
 
-  async function publishDatabase(nextDatabase: SiteDatabase, token: string) {
-    const { owner, repo, branch, path } = GITHUB_PUBLISH_TARGET
-    const baseUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`
-    const getResponse = await fetch(
-      `${baseUrl}?ref=${encodeURIComponent(branch)}`,
-      {
-        headers: {
-          Accept: 'application/vnd.github+json',
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
-
-    if (getResponse.status !== 404 && !getResponse.ok) {
-      throw new Error(
-        `Não foi possível ler o JSON remoto (${getResponse.status}).`,
-      )
-    }
-
-    const currentFile =
-      getResponse.status === 404
-        ? null
-        : ((await getResponse.json()) as { sha: string })
-
-    const putResponse = await fetch(baseUrl, {
-      method: 'PUT',
+  async function publishDatabase(
+    nextDatabase: SiteDatabase,
+    endpoint: string,
+    auth: RuntimeAdminAuth,
+  ) {
+    const response = await fetch(resolveWorkerPublishUrl(endpoint), {
+      method: 'POST',
       headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
+        Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`,
       },
       body: JSON.stringify({
-        message: `Update site admin database - ${new Date().toISOString()}`,
-        content: encodeBase64Unicode(JSON.stringify(nextDatabase, null, 2)),
-        branch,
-        ...(currentFile?.sha ? { sha: currentFile.sha } : {}),
+        database: nextDatabase,
+        commitMessage: `Update site admin database - ${new Date().toISOString()}`,
       }),
     })
 
-    if (!putResponse.ok) {
+    let payload: { ok?: boolean; error?: string; commitSha?: string | null } | null =
+      null
+
+    try {
+      payload = (await response.json()) as {
+        ok?: boolean
+        error?: string
+        commitSha?: string | null
+      }
+    } catch {
+      payload = null
+    }
+
+    if (!response.ok) {
       throw new Error(
-        `O GitHub recusou a atualização (${putResponse.status}).`,
+        payload?.error ||
+          `O backend de publicação recusou a atualização (${response.status}).`,
       )
     }
+
+    return payload
+  }
+
+  function handleLocalSignOut() {
+    clearRuntimeAdminAuth()
+    setLoginValues({
+      username: '',
+      password: '',
+    })
+    signOut()
   }
 
   async function handleSaveAndPublish() {
-    const token = getEmbeddedGithubToken()
+    const endpoint = getEmbeddedPublishEndpoint()
 
-    if (!token) {
+    if (!endpoint) {
       setFeedback(
-        'A chave de publicação embutida no HTML do admin não foi encontrada. Verifique a configuração do app antes de publicar.',
+        'O endpoint de publicação do Worker ainda não foi configurado no HTML do admin.',
+      )
+      return
+    }
+
+    const auth =
+      getStoredRuntimeAdminAuth() ??
+      (loginValues.username.trim() && loginValues.password
+        ? {
+            username: loginValues.username.trim(),
+            password: loginValues.password,
+          }
+        : null)
+
+    if (!auth) {
+      setFeedback(
+        'A sessão atual não possui as credenciais do admin para falar com o backend. Saia e entre novamente no painel.',
       )
       return
     }
@@ -461,16 +534,16 @@ function AdminPage() {
     setFeedback('')
 
     try {
-      await publishDatabase(nextDatabase, token)
+      const result = await publishDatabase(nextDatabase, endpoint, auth)
       setFeedback(
-        'Alterações salvas neste navegador e publicadas no GitHub. O GitHub Pages deve refletir a nova versão após o próximo deploy automático.',
+        `Alterações salvas neste navegador e enviadas ao backend de publicação.${result?.commitSha ? ` Commit: ${result.commitSha}.` : ''} O GitHub Pages deve refletir a nova versão após o próximo deploy automático.`,
       )
     } catch (error) {
       setFeedback(
         `${
           error instanceof Error
             ? error.message
-            : 'Falha ao publicar o JSON no GitHub.'
+            : 'Falha ao publicar o JSON pelo backend.'
         } As alterações ficaram salvas localmente, mas a versão compartilhada não foi atualizada.`,
       )
     } finally {
@@ -489,6 +562,10 @@ function AdminPage() {
     }
 
     setLoginError('')
+    storeRuntimeAdminAuth({
+      username: loginValues.username.trim(),
+      password: loginValues.password,
+    })
   }
 
   const siteHomeHref = getSiteHomeHref()
@@ -592,9 +669,9 @@ function AdminPage() {
             </h1>
             <p className="admin-section-copy">
               Edite textos, branding, imagens, snippets, cores e SEO sem
-              backend. Neste projeto com GitHub Pages, o botão Salvar e
-              publicar aplica a mudança no navegador atual e atualiza o JSON
-              compartilhado do site.
+              backend de dados tradicional. O botão Salvar e publicar aplica a
+              mudança no navegador atual e envia o JSON para o backend de
+              publicação da landing.
             </p>
           </div>
 
@@ -607,7 +684,7 @@ function AdminPage() {
               variant="outline"
               size="lg"
               className="w-full"
-              onClick={signOut}
+              onClick={handleLocalSignOut}
             >
               <LogOut className="size-5" />
               Sair
@@ -1735,7 +1812,7 @@ function AdminPage() {
                 </p>
                 <p className="admin-field-hint">
                   {feedback ||
-                    'Salve e publique para aplicar o rascunho no navegador atual e atualizar a versão compartilhada do GitHub Pages.'}
+                    'Salve e publique para aplicar o rascunho no navegador atual e enviar a atualização para o backend de publicação.'}
                 </p>
               </div>
 

@@ -4,13 +4,6 @@ export const SITE_DATABASE_URL = 'site-admin-db.json'
 export const SITE_DATABASE_STORAGE_KEY = 'landing-page.site-database.v1'
 export const ADMIN_SESSION_STORAGE_KEY = 'landing-page.admin-session.v1'
 
-export const GITHUB_PUBLISH_TARGET = {
-  owner: 'guilherme-cesar-oliveira',
-  repo: 'landing-page-p1',
-  branch: 'main',
-  path: 'public/site-admin-db.json',
-} as const
-
 export const ADMIN_CREDENTIALS = {
   username: 'admin',
   password: 'junior2026',
